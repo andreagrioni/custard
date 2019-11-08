@@ -223,3 +223,4 @@ def fit_network(
         workers=0,
         use_multiprocessing=True
     )
+    return history
