@@ -1,0 +1,166 @@
+from tensorflow import keras
+import pandas as pd
+import tensorflow as tf
+import os
+import network
+'''
+train network
+'''
+
+
+def update_history(
+    history,
+    log_history,
+    iteration=None
+    ):
+
+    df_history = pd.DataFrame(
+        history.history
+        )
+    if iteration:
+        df_history['iteration'] = iteration
+    updated_history = log_history.append(
+        df_history
+        )
+
+    return updated_history
+
+
+def callbacks(
+    log_name,
+    dest_path
+    ):
+    '''
+    define callbacks funtions
+    to run during network
+    training
+
+    log_name=lof file name
+    dest_path=file destination path
+    '''
+    log_path = os.path.join(
+        dest_path,
+        log_name
+    )
+
+    Erly_stop = keras.callbacks.EarlyStopping(
+        monitor='val_accuracy',
+        min_delta=0,
+        patience=5,
+        verbose=0,
+        mode='auto',
+        baseline=None,
+        restore_best_weights=False
+    )
+
+    csv_logger = keras.callbacks.CSVLogger(
+        log_path,
+        separator="\t",
+        append=False
+    )
+
+    return [csv_logger, Erly_stop]
+
+
+def run_epochs(
+    train_set,
+    batches_limit,
+    iteration,
+    log_history
+):
+    for batch, batch_data in enumerate(
+        train_set
+        )
+    ):
+        print(
+            "training\tbatch:", batch,
+            "of total:",
+            len(train_set),
+            sep = "\t"
+        )
+        
+        X_train, y_train = batch_data
+        
+        log_name = f'{iteration}_{batch}_train.csv'
+
+        callbaks = callbacks(
+            log_name,
+            tmp_path
+        )
+
+        history = network.fit_network(
+            X_train,
+            y_train,
+            batch_size,
+            callbacks
+        )
+
+        # UPDATE HISTORY
+        log_history = update_history(
+                history,
+                log_history,
+                iteration
+                )
+        if batch >= batches_limit:
+            break
+    return log_history
+
+def run_iterations(
+    model,
+    train_set,
+    iterations,
+    batches_limit,
+    ):
+    log_history = pd.DataFrame()
+    for iteration in range(
+        0, iterations
+    ):
+        print("epoch:", iteration, "of total:", iterations, sep="\t")
+        print("\tbatch limit:", batches_limit, sep="\t")
+
+        history = run_epochs(
+            train_set,
+            batches_limit,
+            iteration,
+            log_history
+        )
+
+        log_history = update_history(
+                history,
+                log_history
+                )
+    return log_history
+
+
+def train_network(
+    model,
+    train_set,
+    batch_size_train,
+    batches_limit=None,
+    iterations=None
+    ):
+    '''
+    fun train network on user 
+    specified datasets
+
+    paramenters:
+    model=trainable network
+    train_set=ImageBatchGenerator
+    batch_size_train=batch size
+    batches_limit=define a max number of batches to use for training
+    iterations=max number of iterations
+    '''
+    if not iterations:
+        iterations = math.ceil(
+            len(images)/batch_size_train
+        )
+    if not batches_limit:
+        batches_limit = len(images)
+    # RUN ITERATIONS MODULE
+    log_history = run_iterations(
+            model,
+            train_set,
+            iterations,
+            batches_limit
+    )
+    return log_history
