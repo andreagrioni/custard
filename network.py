@@ -13,7 +13,6 @@ def build_network():
     build a trainable network.
     '''
     model = build_architecture(
-        NETWORK_ARCHITECTURE
     )
     model = compile_network(
         model=model,
@@ -31,9 +30,6 @@ def build_architecture(
 
     network architecture was empirical
     defined and hard coded.
-
-    paramenters:
-    NETWORK_ARCHITECTURE=list of tuples with layer and filters/neurons
     '''
     model = keras.models.Sequential()
 
@@ -43,7 +39,7 @@ def build_architecture(
             kernel_size=(6, 6),
             padding='same',
             data_format="channels_last",
-            input_shape=(50, 20, 3)
+            input_shape=(50, 20, 1)
         )
     )
     model.add(
@@ -171,8 +167,8 @@ def optimizer():
 
 
 def compile_network(
-    model=model,
-    optimizer=optimizer
+    model,
+    optimizer
 ):
     '''
     fun compline the network into a 
@@ -187,11 +183,11 @@ def compile_network(
 
 
 def fit_network(
+    model,
     X_train,
     y_train,
     batch_size,
-    callbacks,
-
+    callbacks
 ):
     '''
     fun fits the model with 
@@ -203,13 +199,14 @@ def fit_network(
     batch_size=int
     callbacks=Keras callbacks
     '''
+    print("input_shape X train", X_train.shape)
     history = model.fit(
         x=X_train,
         y=y_train,
         batch_size=32,
         epochs=1,
         verbose=1,
-        callbacks=callbacks(log_name, tmp_path),
+        callbacks=callbacks,
         # validation_split=0.2,
         #validation_data=(X_val, y_val),
         shuffle=True,

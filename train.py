@@ -3,6 +3,8 @@ import pandas as pd
 import tensorflow as tf
 import os
 import network
+import math
+import tempfile
 '''
 train network
 '''
@@ -13,20 +15,27 @@ def update_history(
     log_history,
     iteration=None
     ):
+    '''
+    update dataframe with training
+    history.
 
+    parameters:
+    history=df with current history
+    log_history=df with previous histories
+    iteration=iteration number
+    '''
     df_history = pd.DataFrame(
-        history.history
+        history
         )
     if iteration:
         df_history['iteration'] = iteration
     updated_history = log_history.append(
         df_history
         )
-
     return updated_history
 
 
-def callbacks(
+def network_callbacks(
     log_name,
     dest_path
     ):
@@ -63,15 +72,27 @@ def callbacks(
 
 
 def run_epochs(
+    model,
     train_set,
-    batches_limit,
+    batch_size,
     iteration,
+    batches_limit,
+    tmp_path,
     log_history
 ):
+    '''
+    fun controls one cycle training
+    
+    paramenters:
+    training_set=train set as ohe array
+    batches_limit=limit train to N batches
+    iteration=iteration number
+    log_history=df of train history
+    '''
     for batch, batch_data in enumerate(
         train_set
-        )
     ):
+
         print(
             "training\tbatch:", batch,
             "of total:",
@@ -83,21 +104,24 @@ def run_epochs(
         
         log_name = f'{iteration}_{batch}_train.csv'
 
-        callbaks = callbacks(
+        callbacks = network_callbacks(
             log_name,
             tmp_path
         )
 
         history = network.fit_network(
+            model,
             X_train,
             y_train,
             batch_size,
             callbacks
         )
+        
+        epoch_hist = history.history
 
         # UPDATE HISTORY
         log_history = update_history(
-                history,
+                epoch_hist,
                 log_history,
                 iteration
                 )
@@ -105,12 +129,24 @@ def run_epochs(
             break
     return log_history
 
+
 def run_iterations(
     model,
     train_set,
+    batch_size,
     iterations,
     batches_limit,
+    tmp_name
     ):
+    '''
+    fun controls iterative training
+
+    paramenters:
+    model=trainable network
+    train_set=whole train set as array
+    iteration=number of iterations
+    batches_limit=train each iteration on N batches.
+    '''
     log_history = pd.DataFrame()
     for iteration in range(
         0, iterations
@@ -119,10 +155,13 @@ def run_iterations(
         print("\tbatch limit:", batches_limit, sep="\t")
 
         history = run_epochs(
-            train_set,
-            batches_limit,
-            iteration,
-            log_history
+            model=model,
+            train_set=train_set,
+            batch_size=batch_size,
+            iteration=iteration,
+            batches_limit=batches_limit,
+            tmp_path=tmp_name,
+            log_history=log_history
         )
 
         log_history = update_history(
@@ -135,7 +174,7 @@ def run_iterations(
 def train_network(
     model,
     train_set,
-    batch_size_train,
+    batch_size=32,
     batches_limit=None,
     iterations=None
     ):
@@ -146,21 +185,29 @@ def train_network(
     paramenters:
     model=trainable network
     train_set=ImageBatchGenerator
-    batch_size_train=batch size
+    batch_size=batch size
     batches_limit=define a max number of batches to use for training
     iterations=max number of iterations
     '''
+    tmpdirname="custard_tmp"
+    os.makedirs(
+        tmpdirname, exist_ok=True)
+
+    # with tempfile.TemporaryDirectory() as tmpdirname:
+        # print(tmpdirname)
     if not iterations:
         iterations = math.ceil(
-            len(images)/batch_size_train
+            len(train_set)/batch_size
         )
     if not batches_limit:
-        batches_limit = len(images)
+        batches_limit = len(train_set)
     # RUN ITERATIONS MODULE
     log_history = run_iterations(
-            model,
-            train_set,
-            iterations,
-            batches_limit
+            model=model,
+            train_set=train_set,
+            batch_size=batch_size,
+            iterations=iterations,
+            batches_limit=batches_limit,
+            tmp_name=tmpdirname
     )
     return log_history
