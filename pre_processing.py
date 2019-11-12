@@ -85,7 +85,10 @@ def load_dataset(
             df_connections,
             df_labels
             )
-
+    elif scope == 'predict':
+        return df_connections
+    else:
+        raise Exception('Unknown operation')
 
 if __name__ == "__main__":
     target_tsv = "pre_processing_test.tsv"
