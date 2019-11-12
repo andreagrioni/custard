@@ -1,38 +1,99 @@
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.models import load_model
-import pre_processing
-import os
+import sklearn.metrics as metrics
+import numpy as np
+import collections
+import json
+import pandas as pd
 
-def load(path, name='my_model.h5'):
-    model_file_path = os.path.join(path, name)
-    model = load_model(model_file_path)
-    return model
+'''
+collections of sklear metrics to evaluate
+the predicted results of the model.
+'''
 
+def metrics_sklearn(
+    y_true, y_pred, threshold = 0.5):
+    '''
+    fun runs several metrics from sklearn
+    and returns a dictionary of values.
 
-def model_predict(
-    model, dataset, batch_size=32
-    ):
-    predictions = model.predict(
-        dataset, batch_size=batch_size,
-        verbose=0, steps=None,
-        callbacks=None,
-        max_queue_size=10, workers=1,
-        use_multiprocessing=False
+    paramenters:
+    y_true=real values
+    y_pred=predected values
+    threshold=threshold score for positive class
+    '''
+    metrics_df = collections.defaultdict()
+
+    y_pred_class = np.where(
+        y_pred > threshold, 1, 0
         )
-    return predictions
 
-if __name__ == "__main__":
-    path = './'
-    target_tsv = "pre_processing_test.tsv"
-    model = load(path)
-    df_ohe, df_labels = pre_processing.load_dataset(
-        target_tsv,
-        scope='evaluation'
-        )
+    metrics_df['y_true'] = y_true.tolist()
+    metrics_df['y_pred'] = y_pred.tolist()
+    metrics_df['threshold'] = threshold
+
+    metrics_df['accuracy'] = metrics.accuracy_score(
+        y_true, y_pred_class
+    )
     
-    predictions = model_predict(
-    model, df_ohe, batch_size=32
+    metrics_df['auc_score'] = metrics.roc_auc_score(
+        y_true, y_pred
     )
 
-    print(predictions)
+    metrics_df['average_prec_score'] = metrics.average_precision_score(
+        y_true, y_pred
+        )
+    
+    metrics_df['balanced_accuracy_score'] = metrics.balanced_accuracy_score(
+        y_true, y_pred_class
+    )
+
+    metrics_df['f_beta_score'] = metrics.fbeta_score(
+        y_true, y_pred_class, 1.0
+    ).tolist()
+
+    metrics_df['precision_score'] = metrics.precision_score(
+        y_true, y_pred_class
+    ).tolist()
+
+    metrics_df['recall_score'] = metrics.recall_score(
+        y_true, y_pred_class
+    ).tolist()
+
+    metrics_df['r2_score'] = metrics.r2_score(
+        y_true, y_pred
+    ).tolist()
+    return metrics_df
+
+
+def dump_metrics(metrics_dict, path, file_name):
+    '''
+    fun dumps the metrics to a json file for
+    future usage.
+
+    paramenters:
+    metrics_dict=metrics
+    path=output directory path
+    file_name=output file name
+    '''
+    file_path = os.path.join(
+        path, f'{file_name}.json'
+        )
+    with open(file_path, 'w') as outfile:
+        json.dump(metrics_dict, outfile)
+    return file_path
+
+
+if __name__ == "__main__":
+    np.random.seed(1989)
+    y_true = np.random.randint(
+        low=0, high=2, size=100
+    )
+    y_pred = np.random.uniform(
+        low=0, high=1, size=100
+    )
+
+    metrics = metrics_sklearn(
+            y_true, y_pred
+            )
+    dump_metrics(
+        metrics, os.getcwd(), 'metrics.json'
+        )

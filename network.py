@@ -200,7 +200,6 @@ def fit_network(
     batch_size=int
     callbacks=Keras callbacks
     '''
-    print("input_shape X train", X_train.shape)
     history = model.fit(
         x=X_train,
         y=y_train,
