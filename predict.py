@@ -6,6 +6,13 @@ import os
 
 
 def load(path, name='my_model.h5'):
+    '''
+    load h5 model.
+    
+    paramenters:
+    path=dir path of model
+    name=model file name
+    '''
     model_file_path = os.path.join(path, name)
     model = load_model(model_file_path)
     return model
@@ -14,6 +21,15 @@ def load(path, name='my_model.h5'):
 def model_predict(
     model, dataset, batch_size=32
     ):
+    '''
+    predict dataset with selected
+    model.
+
+    paramenters:
+    model=model object
+    dataset=one hot encoding array
+    batch_size=dataset batch size
+    '''
     predictions = model.predict(
         dataset,
         batch_size=batch_size,

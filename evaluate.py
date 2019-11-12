@@ -2,8 +2,8 @@ import sklearn.metrics as metrics
 import numpy as np
 import collections
 import json
+import os
 import pandas as pd
-
 '''
 collections of sklear metrics to evaluate
 the predicted results of the model.
@@ -82,6 +82,31 @@ def dump_metrics(metrics_dict, path, file_name):
     return file_path
 
 
+def evaluate_model(
+    y_true, y_pred,
+    threshold, output_dir=None, json_name='metrics.json'):
+    '''
+    fun runs metrics evaluations
+    and dump json file.
+
+    parameters:
+    y_true=real values
+    y_pred=predected values
+    threshold=threshold score for positive class
+    output_dir=json output dir
+    json_name=json file name
+    '''
+    if not output_dir:
+        output_dir = os.getcwd()
+    metrics = metrics_sklearn(
+            y_true, y_pred
+            )
+    dump_metrics(
+        metrics, output_dir, json_name
+        )
+    return json_name
+
+
 if __name__ == "__main__":
     np.random.seed(1989)
     y_true = np.random.randint(
@@ -90,10 +115,5 @@ if __name__ == "__main__":
     y_pred = np.random.uniform(
         low=0, high=1, size=100
     )
-
-    metrics = metrics_sklearn(
-            y_true, y_pred
-            )
-    dump_metrics(
-        metrics, os.getcwd(), 'metrics.json'
-        )
+    evaluate_model(
+    y_true, y_pred, 0.5, output_dir=None, json_name='metrics.json')

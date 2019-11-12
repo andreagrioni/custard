@@ -80,13 +80,11 @@ def load_dataset(
             df_connections,
             df_labels
             )]
-    elif scope == 'evaluation':
+    elif scope in ['evaluation', 'predict']:
         return (
             df_connections,
             df_labels
             )
-    elif scope == 'predict':
-        return df_connections
     else:
         raise Exception('Unknown operation')
 
