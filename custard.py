@@ -4,35 +4,41 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import os
 import shutil
-#import IPython.display as display
-#import PIL
 import numpy as np
-#import matplotlib.pyplot as plt
 import network
 import train
 import pre_processing
 
 
-def do_training(target_file):
-    # make dataset from custard table
-    # as tuple of value, labels.
+def data_gen(target_file):
     train_set = pre_processing.load_dataset(
         target_tsv=target_file
     )
+    return train_set
 
+def do_training(dataset):
     # generate network
     model = network.build_network()
 
-
     # train network
-    history = train.train_network(
+    history, model = train.train_network(
         model,
-        train_set,
+        dataset,
         batches_limit=None,
         iterations=None
     )
+    return history, model
 
 
 if __name__ == "__main__":
+    evaluate = True
+    train = False
     target_file = 'pre_processing_test.tsv'
-    do_training(target_file)
+    dataset = data_gen(target_file)
+
+    if train:
+        history, model = do_training(dataset)
+        network.save_model(model, os.getcwd())
+    elif evaluate:
+        print(os.getcwd())
+        

@@ -52,7 +52,7 @@ def network_callbacks(
         log_name
     )
 
-    Erly_stop = keras.callbacks.EarlyStopping(
+    Early_stop = keras.callbacks.EarlyStopping(
         monitor='val_accuracy',
         min_delta=0,
         patience=5,
@@ -68,7 +68,7 @@ def network_callbacks(
         append=False
     )
 
-    return [csv_logger, Erly_stop]
+    return [csv_logger, Early_stop]
 
 
 def run_epochs(
@@ -79,7 +79,7 @@ def run_epochs(
     batches_limit,
     tmp_path,
     log_history
-):
+    ):
     '''
     fun controls one cycle training
     
@@ -168,7 +168,7 @@ def run_iterations(
                 history,
                 log_history
                 )
-    return log_history
+    return log_history, model
 
 
 def train_network(
@@ -193,8 +193,6 @@ def train_network(
     os.makedirs(
         tmpdirname, exist_ok=True)
 
-    # with tempfile.TemporaryDirectory() as tmpdirname:
-        # print(tmpdirname)
     if not iterations:
         iterations = math.ceil(
             len(train_set)/batch_size
@@ -202,7 +200,7 @@ def train_network(
     if not batches_limit:
         batches_limit = len(train_set)
     # RUN ITERATIONS MODULE
-    log_history = run_iterations(
+    history, model = run_iterations(
             model=model,
             train_set=train_set,
             batch_size=batch_size,
@@ -210,4 +208,4 @@ def train_network(
             batches_limit=batches_limit,
             tmp_name=tmpdirname
     )
-    return log_history
+    return history, model

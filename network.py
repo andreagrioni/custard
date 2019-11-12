@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
-
+import os
 '''
 this module define and create the
 network model.
@@ -22,7 +22,7 @@ def build_network():
 
 
 def build_architecture(
-):
+    ):
     '''
     fun creates the network architecture 
     necessary for the training and 
@@ -42,11 +42,7 @@ def build_architecture(
             input_shape=(50, 20, 1)
         )
     )
-    model.add(
-        keras.layers.LeakyReLU(
-            alpha=0.3
-        )
-    )
+
     model.add(
         keras.layers.BatchNormalization())
     model.add(
@@ -55,8 +51,14 @@ def build_architecture(
         )
     )
     model.add(
+        keras.layers.LeakyReLU(
+            alpha=0.3
+        )
+    )
+    model.add(
         keras.layers.Dropout(0.2)
     )
+
     model.add(
         keras.layers.Conv2D(
             filters=64,
@@ -65,11 +67,6 @@ def build_architecture(
         )
     )
     model.add(
-        keras.layers.LeakyReLU(
-            alpha=0.3
-        )
-    )
-    model.add(
         keras.layers.BatchNormalization())
     model.add(
         keras.layers.MaxPooling2D(
@@ -77,9 +74,13 @@ def build_architecture(
         )
     )
     model.add(
+        keras.layers.LeakyReLU(
+            alpha=0.3
+        )
+    )
+    model.add(
         keras.layers.Dropout(0.2)
     )
-
     model.add(
         keras.layers.Conv2D(
             filters=32,
@@ -88,9 +89,25 @@ def build_architecture(
         )
     )
     model.add(
+        keras.layers.BatchNormalization())
+    model.add(
+        keras.layers.MaxPooling2D(
+            pool_size=(2, 2)
+        )
+    )
+    model.add(
         keras.layers.LeakyReLU(
             alpha=0.3
         )
+    )
+    model.add(
+        keras.layers.Dropout(0.2)
+    )
+    model.add(
+        keras.layers.Flatten()
+    )
+    model.add(
+        keras.layers.Dense(512)
     )
     model.add(
         keras.layers.BatchNormalization())
@@ -100,49 +117,33 @@ def build_architecture(
         )
     )
     model.add(
-        keras.layers.Dropout(0.2)
-    )
-
-    model.add(
-        keras.layers.Flatten()
-    )
-
-    model.add(
-        keras.layers.Dense(512)
-    )
-
-    model.add(
         keras.layers.LeakyReLU(
             alpha=0.3
         )
     )
     model.add(
-        keras.layers.BatchNormalization())
-    model.add(
         keras.layers.Dropout(0.2)
     )
-
     model.add(
         keras.layers.Dense(300)
     )
-
-    model.add(
-        keras.layers.LeakyReLU(
-            alpha=0.3)
-    )
     model.add(
         keras.layers.BatchNormalization())
     model.add(
-        keras.layers.Dropout(0.2)
-    )
-
-    model.add(
-        keras.layers.Dense(2)
-    )
+        keras.layers.MaxPooling2D(
+            pool_size=(2, 2)
+        )
+        )
     model.add(
         keras.layers.LeakyReLU(
             alpha=0.3
         )
+    )
+    model.add(
+        keras.layers.Dropout(0.2)
+    )
+    model.add(
+        keras.layers.Dense(2)
     )
     model.add(
         keras.layers.Softmax(
@@ -207,7 +208,7 @@ def fit_network(
         epochs=1,
         verbose=1,
         callbacks=callbacks,
-        # validation_split=0.2,
+        validation_split=0.2,
         #validation_data=(X_val, y_val),
         shuffle=True,
         class_weight=None,
@@ -221,3 +222,17 @@ def fit_network(
         use_multiprocessing=True
     )
     return history
+
+def save_model(
+    model, path, name='my_model.h5'
+    ):
+    model_file_path = os.path.join(
+        path, name
+        )
+    model.save(model_file_path)
+    del model
+    return model_file_path
+
+
+if __name__ == "__main__":
+    pass

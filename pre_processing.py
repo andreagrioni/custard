@@ -50,12 +50,12 @@ def to_ohe(
                 ohe_matrix[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
                     x_seq_nt, y_seq_nt
                 )
-    print("dimm matrix", ohe_matrix.shape)
     return ohe_matrix
 
 
 def load_dataset(
-    target_tsv
+    target_tsv,
+    scope='training'
     ):
     '''
     fun loads connection table as pandas df,
@@ -72,10 +72,20 @@ def load_dataset(
     df_connections = to_ohe( 
         df=df.drop(['label'],
         axis = 1
-        )
-        )
+        ))
+
     df_labels = pd.get_dummies(df['label']).to_numpy()
-    return [(df_connections, df_labels)]
+    if scope == 'training':
+        return [(
+            df_connections,
+            df_labels
+            )]
+    elif scope == 'evaluation':
+        return (
+            df_connections,
+            df_labels
+            )
+
 
 if __name__ == "__main__":
     target_tsv = "pre_processing_test.tsv"
