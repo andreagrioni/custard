@@ -151,7 +151,7 @@ def run_iterations(
     for iteration in range(
         0, iterations
     ):
-        print("epoch:", iteration, "of total:", iterations, sep="\t")
+        print("iteration:", iteration, "of total:", iterations, sep="\t")
         print("\tbatch limit:", batches_limit, sep="\t")
 
         history = run_epochs(

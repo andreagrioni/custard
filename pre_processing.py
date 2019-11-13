@@ -1,7 +1,8 @@
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
-
+import misc
+import logging
 '''
 this module creates input dataset
 for custard
@@ -34,6 +35,8 @@ def to_ohe(
     paramenters:
     df=input dataset
     '''
+    logging.info(f'input table shape is {df.shape}')
+
     samples = df.shape[0]
     ohe_shape = (samples, 50, 20, 1)
 
@@ -50,6 +53,7 @@ def to_ohe(
                 ohe_matrix[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
                     x_seq_nt, y_seq_nt
                 )
+    logging.info(f'output ohe shape is {ohe_matrix.shape}')
     return ohe_matrix
 
 
@@ -64,17 +68,27 @@ def load_dataset(
     parameters:
     dataset=custard input tsv file
     '''
-    df = pd.read_csv(
-        target_tsv,
-        sep='\t',
-        )
-
+    try:
+        df = pd.read_csv(
+            target_tsv,
+            sep='\t',
+            names=['x','y','label']
+            )
+    except Exception as e:
+        logging.error("Exception occured", exc_info=True)
+        raise SystemExit
     df_connections = to_ohe( 
         df=df.drop(['label'],
         axis = 1
         ))
 
     df_labels = pd.get_dummies(df['label']).to_numpy()
+
+    misc.load_dataset_checkpoint(
+        df_connections,
+        df_labels
+    )
+
     if scope == 'training':
         return [(
             df_connections,
@@ -86,7 +100,9 @@ def load_dataset(
             df_labels
             )
     else:
-        raise Exception('Unknown operation')
+        logging.error(f'unknown scope for load dataset: {scope}')
+        raise Exception(f'Unknown scope {scope}')
+
 
 if __name__ == "__main__":
     target_tsv = "pre_processing_test.tsv"

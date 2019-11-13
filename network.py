@@ -14,6 +14,9 @@ def build_network():
     '''
     model = build_architecture(
     )
+
+
+
     model = compile_network(
         model=model,
         optimizer=optimizer()
@@ -42,7 +45,6 @@ def build_architecture(
             input_shape=(50, 20, 1)
         )
     )
-
     model.add(
         keras.layers.BatchNormalization())
     model.add(
@@ -103,19 +105,22 @@ def build_architecture(
     model.add(
         keras.layers.Dropout(0.2)
     )
+
+    # model.add(
+    #     keras.layers.Flatten()
+    # )
+    
+#    need further investigation
     model.add(
-        keras.layers.Flatten()
+        keras.layers.GlobalAveragePooling2D()
     )
+
     model.add(
         keras.layers.Dense(512)
     )
     model.add(
         keras.layers.BatchNormalization())
-    model.add(
-        keras.layers.MaxPooling2D(
-            pool_size=(2, 2)
-        )
-    )
+
     model.add(
         keras.layers.LeakyReLU(
             alpha=0.3
@@ -129,11 +134,7 @@ def build_architecture(
     )
     model.add(
         keras.layers.BatchNormalization())
-    model.add(
-        keras.layers.MaxPooling2D(
-            pool_size=(2, 2)
-        )
-        )
+
     model.add(
         keras.layers.LeakyReLU(
             alpha=0.3
@@ -205,7 +206,7 @@ def fit_network(
         y=y_train,
         batch_size=32,
         epochs=1,
-        verbose=1,
+        verbose=0,
         callbacks=callbacks,
         validation_split=0.2,
         #validation_data=(X_val, y_val),
