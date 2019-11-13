@@ -6,10 +6,13 @@ import predict
 import evaluate
 import misc
 
-def data_gen(target_file, scope='training'):
+def data_gen(
+    target_file, batch_size, scope='training'
+    ):
     train_set = pre_processing.load_dataset(
         target_tsv=target_file,
-        scope=scope
+        batch_size=batch_size,
+        scope=scope,
     )
     return train_set
 
@@ -17,7 +20,10 @@ def do_training(OPTIONS):
     train_opt = OPTIONS['train']
     # load dataset
     input_file = OPTIONS['input_file']
-    dataset = data_gen(input_file)
+    batch_size = OPTIONS['train']['batch_size']
+    dataset = data_gen(
+        input_file, batch_size
+        )
     # generate network
     model = network.build_network()
     # train network
@@ -36,29 +42,7 @@ def do_training(OPTIONS):
 
 if __name__ == "__main__":
 
-    OPTIONS = {
-        'flags' : {
-            'train' : True,
-            'predict' : False,
-            'evaluate' : False
-        },
-        'threshold' : 0.5,
-        'input_file' : '/home/angri/Desktop/projects/custard_testing/custard_toy.tsv',
-        'model' : {
-            'name' : None,
-            'path' : None
-        },
-        'log' : {
-            'level' : 'debug',
-            'name' : 'test_logging.txt'
-        },
-        'train' : {
-            'iterations' : 10,
-            'epochs' : 10,
-            'batches_limit' : 10,
-            'neg_increments' : False
-        }
-    }
+    OPTIONS = misc.load_options()    
 
     misc.create_log(OPTIONS)
     misc.options_log(OPTIONS)
@@ -68,7 +52,9 @@ if __name__ == "__main__":
     model_path = OPTIONS['model']['path']
 
     if OPTIONS['flags']['train']:
-        history, model = do_training(OPTIONS)
+        history, model = do_training(
+            OPTIONS
+            )
 
     if OPTIONS['flags']['predict']:
         X_true, y_true = data_gen(

@@ -173,7 +173,7 @@ def compile_network(
     optimizer
 ):
     '''
-    fun compline the network into a 
+    fun compile the network into a 
     trainable model
     '''
     model.compile(

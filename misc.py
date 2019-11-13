@@ -2,6 +2,35 @@ import logging
 import pprint
 import os
 
+
+def load_options():
+    OPTIONS = {
+        'flags' : {
+            'train' : True,
+            'predict' : False,
+            'evaluate' : False
+        },
+        'threshold' : 0.5,
+        'input_file' : '/home/angri/Desktop/projects/custard_testing/custard_toy.tsv',
+        'model' : {
+            'name' : None,
+            'path' : None
+        },
+        'log' : {
+            'level' : 'debug',
+            'name' : 'test_logging.txt'
+        },
+        'train' : {
+            'iterations' : 5,
+            'epochs' : 10,
+            'batch_size' : 6,
+            'batches_limit' : 10,
+            'neg_increments' : False
+        }
+    }
+    return OPTIONS
+
+
 def create_log(OPTIONS):
     '''
     fun creates logging file
@@ -41,7 +70,10 @@ def options_log(OPTIONS):
     return None
 
 
-def load_dataset_checkpoint(df_connections, df_labels):
+def load_dataset_checkpoint(
+    number, batch_shape,
+    batch_ohe
+    ):
     '''
     checkpoint function for module
     pre_processing - load_dataset.
@@ -49,15 +81,20 @@ def load_dataset_checkpoint(df_connections, df_labels):
     occurred without errors.
 
     paramenters:
-    df_connections=train df
-    df_labels=labels
+    number=batch number
+    batch_shape=shape of input batch
+    batch_ohe=tuple of transformed batch to ohe
     '''
-    if df_connections.shape[0] != df_labels.shape[0]:
+    if batch_ohe[0].shape[0] != batch_ohe[1].shape[0]:
         error_msg = f'different train-label samples shapes:\t{df_connections.shape} != {df_labels.shape}'
         logging.error(
             error_msg
             )
         raise Exception(error_msg)
+        raise SystemExit
+
+    logging.info(f'batch\t{number}\tbatch_shape\t{batch_shape}\ttrain-ohe\t{batch_ohe[0].shape}\tlabel-ohe\t{batch_ohe[1].shape}')
+
     return None
 
 
@@ -98,3 +135,6 @@ def input_paramenters_checkpoint(
         model_path
         )
             raise SystemExit
+
+if __name__ == "__main__":
+    pass

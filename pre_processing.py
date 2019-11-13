@@ -20,7 +20,12 @@ def watson_crick(x_nt, y_nt, alphabet=None):
     alphabet = dict of nt_pair:score
     """
     if not alphabet:
-        alphabet = {"AT": 1, "TA": 1, "GC": 1, "CG": 1}
+        alphabet = {
+            "AT": 1,
+            "TA": 1,
+            "GC": 1,
+            "CG": 1
+            }
     pair = x_nt + y_nt
     return alphabet.get(pair, 0)
 
@@ -35,8 +40,6 @@ def to_ohe(
     paramenters:
     df=input dataset
     '''
-    logging.info(f'input table shape is {df.shape}')
-
     samples = df.shape[0]
     ohe_shape = (samples, 50, 20, 1)
 
@@ -50,15 +53,31 @@ def to_ohe(
             x_seq_nt = x_sequence[sample][x_seq_pos]
             for y_seq_pos in range(0, ohe_shape[2]):
                 y_seq_nt = y_sequence[sample][y_seq_pos]
-                ohe_matrix[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
+                ohe_matrix[
+                    sample,
+                    x_seq_pos,
+                    y_seq_pos,
+                    0] = watson_crick(
                     x_seq_nt, y_seq_nt
                 )
-    logging.info(f'output ohe shape is {ohe_matrix.shape}')
     return ohe_matrix
+
+
+def make_sets(batch):
+    df_connections = to_ohe( 
+        df=batch.drop(['label'],
+        axis = 1
+        ))
+    df_labels = pd.get_dummies(
+        batch['label']
+        ).to_numpy()
+
+    return ( df_connections, df_labels )
 
 
 def load_dataset(
     target_tsv,
+    batch_size,
     scope='training'
     ):
     '''
@@ -77,23 +96,22 @@ def load_dataset(
     except Exception as e:
         logging.error("Exception occured", exc_info=True)
         raise SystemExit
-    df_connections = to_ohe( 
-        df=df.drop(['label'],
-        axis = 1
-        ))
 
-    df_labels = pd.get_dummies(df['label']).to_numpy()
-
-    misc.load_dataset_checkpoint(
-        df_connections,
-        df_labels
-    )
+    batches = split_df(df, batch_size)
 
     if scope == 'training':
-        return [(
-            df_connections,
-            df_labels
-            )]
+        train_set = list()
+        for number, batch in enumerate(batches):
+            train_set.append(
+                make_sets(batch)
+            )
+            misc.load_dataset_checkpoint(
+                number=number,
+                batch_shape=batch.shape,
+                batch_ohe=train_set[-1]
+            )
+        return train_set
+
     elif scope in ['evaluation', 'predict']:
         return (
             df_connections,
@@ -103,6 +121,35 @@ def load_dataset(
         logging.error(f'unknown scope for load dataset: {scope}')
         raise Exception(f'Unknown scope {scope}')
 
+# author: http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
+def chunk_marks(nrows, chunk_size):
+    '''
+    fun generates a 1D array that indicate
+    where to split the df
+    
+    paramenters:
+    nrows=df shape
+    chunk_size=batch size
+    '''
+    return range(1 * chunk_size, (nrows // chunk_size + 1) * chunk_size, chunk_size)
+
+def split_df(df, batches_size):
+    '''
+    fun splits input pandas df into 
+    batches. Returns a list of 
+    subarrays.
+
+    paramenters:
+    df=input pandas df
+    batches_size=chunk size
+    '''
+    batches_points = list(
+        chunk_marks(
+            df.shape[0],
+            batches_size
+            )
+            )
+    return np.split(df, batches_points)
 
 if __name__ == "__main__":
     target_tsv = "pre_processing_test.tsv"
