@@ -43,13 +43,13 @@ def do_training(OPTIONS):
 if __name__ == "__main__":
 
     OPTIONS = misc.load_options()    
-
+    
+    os.chdir(OPTIONS['working_dir'])
+    model_name = OPTIONS['model']['name']
+    model_path = OPTIONS['model']['path']    
+    
     misc.create_log(OPTIONS)
     misc.options_log(OPTIONS)
-
-    
-    model_name = OPTIONS['model']['name']
-    model_path = OPTIONS['model']['path']
 
     if OPTIONS['flags']['train']:
         history, model = do_training(

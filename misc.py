@@ -12,6 +12,7 @@ def load_options():
         },
         'threshold' : 0.5,
         'input_file' : '/home/angri/Desktop/projects/custard_testing/custard_toy.tsv',
+        'working_dir' : '/home/angri/Desktop/projects/custard_testing/',
         'model' : {
             'name' : None,
             'path' : None
@@ -135,6 +136,59 @@ def input_paramenters_checkpoint(
         model_path
         )
             raise SystemExit
+
+
+def print_history(
+    iteration,
+    batch,
+    train_set_size,
+    batch_history
+    ):
+    metrics = [
+        f'{metric}|{value[0]:.2f}'
+        if not
+        'loss' in metric
+        else
+        f'{metric}|{value[0]:.2E}'
+        for metric, value in
+        batch_history.items()
+        ]
+
+    print(
+        "iter",
+        iteration,
+        "batch",
+        batch,
+        "of",
+        train_set_size,
+        '\t'.join(metrics),
+        sep = "\t"
+    )
+    return None
+
+def update_history(
+    history,
+    log_history,
+    iteration=None
+    ):
+    '''
+    update dataframe with training
+    history.
+
+    parameters:
+    history=df with current history
+    log_history=df with previous histories
+    iteration=iteration number
+    '''
+    df_history = pd.DataFrame(
+        history
+        )
+    if iteration:
+        df_history['iteration'] = iteration
+    updated_history = log_history.append(
+        df_history
+        )
+    return updated_history
 
 if __name__ == "__main__":
     pass

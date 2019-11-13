@@ -5,34 +5,10 @@ import os
 import network
 import math
 import tempfile
+import misc
 '''
 train network
 '''
-
-
-def update_history(
-    history,
-    log_history,
-    iteration=None
-    ):
-    '''
-    update dataframe with training
-    history.
-
-    parameters:
-    history=df with current history
-    log_history=df with previous histories
-    iteration=iteration number
-    '''
-    df_history = pd.DataFrame(
-        history
-        )
-    if iteration:
-        df_history['iteration'] = iteration
-    updated_history = log_history.append(
-        df_history
-        )
-    return updated_history
 
 
 def network_callbacks(
@@ -91,9 +67,8 @@ def run_epochs(
     '''
     for batch, batch_data in enumerate(
         train_set
-    ):
+        ):
         X_train, y_train = batch_data
-        
         log_name = f'{iteration}_{batch}_train.csv'
 
         callbacks = network_callbacks(
@@ -109,24 +84,22 @@ def run_epochs(
             callbacks
         )
         
-        epoch_hist = history.history
+        batch_history = history.history
 
-        metrics = [f'{metric}|{value[0]:.2f}' if not 'loss' in metric else  f'{metric}|{value[0]:.2E}' for metric, value in epoch_hist.items()]
-
-        print(
-            "training\tbatch:", batch,
-            "of total:",
+        misc.print_history(
+            iteration,
+            batch,
             len(train_set),
-            '\t'.join(metrics),
-            sep = "\t"
+            batch_history
         )
+        
 
-        # UPDATE HISTORY
-        log_history = update_history(
-                epoch_hist,
-                log_history,
-                iteration
-                )
+        # # UPDATE HISTORY
+        # log_history = update_history(
+        #         batch_history,
+        #         log_history,
+        #         iteration
+        #         )
 
         if batch >= batches_limit:
             break
