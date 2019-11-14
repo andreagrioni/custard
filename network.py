@@ -7,12 +7,13 @@ network model.
 '''
 
 
-def build_network():
+def build_network(classes=2):
     '''
     fun is a pipeline of steps that 
     build a trainable network.
     '''
     model = build_architecture(
+        classes
     )
 
 
@@ -25,6 +26,7 @@ def build_network():
 
 
 def build_architecture(
+    classes
     ):
     '''
     fun creates the network architecture 
@@ -33,6 +35,9 @@ def build_architecture(
 
     network architecture was empirical
     defined and hard coded.
+
+    parameters:
+    classes=number of classes
     '''
     model = keras.models.Sequential()
 
@@ -144,7 +149,9 @@ def build_architecture(
         keras.layers.Dropout(0.2)
     )
     model.add(
-        keras.layers.Dense(2)
+        keras.layers.Dense(
+            classes
+            )
     )
     model.add(
         keras.layers.Softmax(
@@ -191,7 +198,7 @@ def train_on_batch_network(
     
     history = model.train_on_batch(
         X_train, y_train, sample_weight=None,
-        class_weight=None, reset_metrics=True
+        class_weight=None, reset_metrics=False
         )
 
     return history
@@ -204,47 +211,47 @@ def test_on_batch_network(
     
     history = model.train_on_batch(
         X_test, y_test, sample_weight=None,
-        reset_metrics=True
+        reset_metrics=False
         )
 
     return history
 
-def fit_network(
-    model,
-    X_train,
-    y_train,
-    batch_size
-    ):
-    '''
-    fun fits the model with 
-    the training set.
+# def fit_network(
+#     model,
+#     X_train,
+#     y_train,
+#     batch_size
+#     ):
+#     '''
+#     fun fits the model with 
+#     the training set.
 
-    paramenters:
-    X_train=train set
-    y_train=label train set
-    batch_size=int
-    '''
-    history = model.fit(
-        x=X_train,
-        y=y_train,
-        batch_size=batch_size,
-        epochs=1,
-        verbose=0,
-        #callbacks=callbacks,
-        validation_split=0.2,
-        #validation_data=(X_val, y_val),
-        shuffle=True,
-        class_weight=None,
-        sample_weight=None,
-        initial_epoch=0,
-        steps_per_epoch=None,
-        # validation_steps=None,
-        # validation_freq=[2,5,10],
-        #max_queue_size=10,
-        #workers=0,
-        #use_multiprocessing=True
-    )
-    return history
+#     paramenters:
+#     X_train=train set
+#     y_train=label train set
+#     batch_size=int
+#     '''
+#     history = model.fit(
+#         x=X_train,
+#         y=y_train,
+#         batch_size=batch_size,
+#         epochs=1,
+#         verbose=0,
+#         #callbacks=callbacks,
+#         validation_split=0.2,
+#         #validation_data=(X_val, y_val),
+#         shuffle=True,
+#         class_weight=None,
+#         sample_weight=None,
+#         initial_epoch=0,
+#         steps_per_epoch=None,
+#         # validation_steps=None,
+#         # validation_freq=[2,5,10],
+#         #max_queue_size=10,
+#         #workers=0,
+#         #use_multiprocessing=True
+#     )
+#     return history
 
 def save_model(
     model, path, name='my_model.h5'

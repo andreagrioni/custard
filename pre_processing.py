@@ -119,7 +119,7 @@ def load_dataset(
             target_tsv,
             sep='\t',
             names=['x','y','label']
-            )
+            ).sample(frac=1).reset_index(drop=True)
     except Exception as e:
         logging.error("Exception occured", exc_info=True)
         raise SystemExit("Failed to load dataset as pandas DataFrame")

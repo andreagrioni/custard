@@ -24,9 +24,10 @@ def load_options():
         'train' : {
             'iterations' : 5,
             'epochs' : 10,
-            'batch_size' : 6,
+            'batch_size' : 32,
             'batches_limit' : 30,
-            'neg_increments' : False
+            'neg_increments' : False,
+            'classes' : 3
         }
     }
 

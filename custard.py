@@ -23,11 +23,11 @@ def do_training(OPTIONS):
     batches_limit = train_opt['batches_limit']
     iterations = train_opt['iterations']
     input_file = OPTIONS['input_file']
-
+    classes = train_opt['classes']
     # load dataset
     dataset = data_gen(input_file, batch_size)
     # generate network
-    model = network.build_network()
+    model = network.build_network(classes)
     # train network
     model = train.train_network(
         model,
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     #model_path = OPTIONS['model']['path']    
 
     if OPTIONS['flags']['train']:
-        history, model = do_training(
+        model = do_training(
             OPTIONS
             )
 
