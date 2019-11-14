@@ -183,14 +183,38 @@ def compile_network(
     )
     return model
 
+def train_on_batch_network(
+    model,
+    X_train,
+    y_train,
+    ):
+    
+    history = model.train_on_batch(
+        X_train, y_train, sample_weight=None,
+        class_weight=None, reset_metrics=True
+        )
+
+    return history
+
+def test_on_batch_network(
+    model,
+    X_test,
+    y_test,
+    ):
+    
+    history = model.train_on_batch(
+        X_test, y_test, sample_weight=None,
+        reset_metrics=True
+        )
+
+    return history
 
 def fit_network(
     model,
     X_train,
     y_train,
-    batch_size,
-    callbacks
-):
+    batch_size
+    ):
     '''
     fun fits the model with 
     the training set.
@@ -199,15 +223,14 @@ def fit_network(
     X_train=train set
     y_train=label train set
     batch_size=int
-    callbacks=Keras callbacks
     '''
     history = model.fit(
         x=X_train,
         y=y_train,
-        batch_size=32,
+        batch_size=batch_size,
         epochs=1,
         verbose=0,
-        callbacks=callbacks,
+        #callbacks=callbacks,
         validation_split=0.2,
         #validation_data=(X_val, y_val),
         shuffle=True,
@@ -217,9 +240,9 @@ def fit_network(
         steps_per_epoch=None,
         # validation_steps=None,
         # validation_freq=[2,5,10],
-        max_queue_size=10,
-        workers=0,
-        use_multiprocessing=True
+        #max_queue_size=10,
+        #workers=0,
+        #use_multiprocessing=True
     )
     return history
 

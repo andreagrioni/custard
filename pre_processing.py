@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import misc
 import logging
+
 '''
 this module creates input dataset
 for custard
@@ -62,17 +63,42 @@ def to_ohe(
                 )
     return ohe_matrix
 
+def split_train_val_set(
+    dataset_ohe, validation_split = 0.2
+    ):
+    batch_features, batch_label = dataset_ohe
+    X_train, X_test, y_train, y_test = train_test_split(
+        batch_features, batch_label,
+        test_size=validation_split,
+        random_state=1989)
+    return (X_train, X_test,
+        y_train, y_test)
 
-def make_sets(batch):
-    df_connections = to_ohe( 
-        df=batch.drop(['label'],
+
+def make_sets_ohe(
+    dataset
+    ):
+    '''
+    fun converts input batch into 
+    one hot encoding of features
+    and labels. output a tuple of 
+    train test ohe dataframes and train test label dataframes.
+
+    paramenters:
+    batch=mini-batch as Pandas df
+    '''
+    batch_features = dataset.drop(
+        ['label'],
         axis = 1
-        ))
-    df_labels = pd.get_dummies(
-        batch['label']
-        ).to_numpy()
+    )
+    batch_label = dataset['label']
 
-    return ( df_connections, df_labels )
+    X_train_ohe = to_ohe(batch_features)
+
+    y_train_dummies = pd.get_dummies(
+        batch_label ).to_numpy()
+
+    return ( X_train_ohe, y_train_dummies )
 
 
 def load_dataset(
@@ -86,6 +112,7 @@ def load_dataset(
 
     parameters:
     dataset=custard input tsv file
+    batch_size=split dataset into mini-batches
     '''
     try:
         df = pd.read_csv(
@@ -95,21 +122,22 @@ def load_dataset(
             )
     except Exception as e:
         logging.error("Exception occured", exc_info=True)
-        raise SystemExit
-
-    batches = split_df(df, batch_size)
+        raise SystemExit("Failed to load dataset as pandas DataFrame")
+    
+    df_ohe = make_sets_ohe(df)
+    df_ohe_batches, df_ohe_labels = split_df(df_ohe, batch_size)
 
     if scope == 'training':
         train_set = list()
-        for number, batch in enumerate(batches):
+        for number, batch in enumerate(
+            zip(df_ohe_batches, df_ohe_labels)
+            ):
+            dataset = split_train_val_set(batch)
+
             train_set.append(
-                make_sets(batch)
+                dataset
             )
-            misc.load_dataset_checkpoint(
-                number=number,
-                batch_shape=batch.shape,
-                batch_ohe=train_set[-1]
-            )
+
         return train_set
 
     elif scope in ['evaluation', 'predict']:
@@ -131,7 +159,10 @@ def chunk_marks(nrows, chunk_size):
     nrows=df shape
     chunk_size=batch size
     '''
-    return range(1 * chunk_size, (nrows // chunk_size + 1) * chunk_size, chunk_size)
+    split_arrays = range(1 * chunk_size,
+    (nrows // chunk_size + 1) * chunk_size, chunk_size
+    )
+    return split_arrays
 
 def split_df(df, batches_size):
     '''
@@ -143,13 +174,16 @@ def split_df(df, batches_size):
     df=input pandas df
     batches_size=chunk size
     '''
+    df_ohe, df_labels = df
     batches_points = list(
-        chunk_marks(
-            df.shape[0],
-            batches_size
-            )
-            )
-    return np.split(df, batches_points)
+        chunk_marks(df_ohe.shape[0], batches_size)
+        )
+    df_ohe_batches = np.split(df_ohe, batches_points)
+    df_ohe_labels = np.split(df_labels, batches_points)
+    
+    logging.info(f"split dataframe of shape {df_ohe.shape} into {len(batches_points)} +~ 1 mini-batches of size {batches_size}")
+    
+    return df_ohe_batches, df_ohe_labels
 
 if __name__ == "__main__":
     target_tsv = "pre_processing_test.tsv"

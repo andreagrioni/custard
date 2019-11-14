@@ -25,10 +25,14 @@ def load_options():
             'iterations' : 5,
             'epochs' : 10,
             'batch_size' : 6,
-            'batches_limit' : 10,
+            'batches_limit' : 30,
             'neg_increments' : False
         }
     }
+
+    create_log(OPTIONS)
+    print_options_log(OPTIONS)
+
     return OPTIONS
 
 
@@ -39,6 +43,8 @@ def create_log(OPTIONS):
     paramenters:
     OPTIONS=tool arguments
     '''
+    input_paramenters_checkpoint(OPTIONS)
+    os.chdir(OPTIONS['working_dir'])
     level = OPTIONS['log']['level']
     file_name = OPTIONS['log']['name']
     #FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
@@ -47,12 +53,13 @@ def create_log(OPTIONS):
         filemode='w',
         level=logging.DEBUG,
         filename=file_name)
-    
-    input_paramenters_checkpoint(OPTIONS)
+    logging.info(
+        f'change wd at: {OPTIONS["working_dir"]}'
+        )
     return None
 
 
-def options_log(OPTIONS):
+def print_options_log(OPTIONS):
     '''
     fun writes to logging file 
     the tool arguments.
@@ -136,35 +143,35 @@ def input_paramenters_checkpoint(
         model_path
         )
             raise SystemExit
+    if not os.path.exists(OPTIONS["working_dir"]):
+        os.makedirs(
+            OPTIONS["working_dir"]
+            )
+        logging.info(
+            f'create wd: {OPTIONS["working_dir"]}'
+            )
+    return None
 
 
 def print_history(
     iteration,
     batch,
     train_set_size,
-    batch_history
+    batch_limit,
+    train_batch_size,
+    test_batch_size,
+    train_batch_history,
+    test_batch_history
     ):
-    metrics = [
-        f'{metric}|{value[0]:.2f}'
-        if not
-        'loss' in metric
-        else
-        f'{metric}|{value[0]:.2E}'
-        for metric, value in
-        batch_history.items()
-        ]
 
-    print(
-        "iter",
-        iteration,
-        "batch",
-        batch,
-        "of",
-        train_set_size,
-        '\t'.join(metrics),
-        sep = "\t"
-    )
-    return None
+    format_string = (f'\titer\t{iteration}\tbatch\t{batch}|{train_set_size}\ttrain_size|{train_batch_size}\tloss|{train_batch_history[0]:.2E}\taccuracy|{train_batch_history[1]:.2f}\tval_size|{test_batch_size}\tloss|{test_batch_history[0]:.2E}\taccuracy|{test_batch_history[1]:.2f}')
+
+    print(format_string)
+    logging.info(format_string)
+
+    log_history = f'{iteration}\t{batch}\t{train_batch_size}\t{train_batch_history[0]}\t{train_batch_history[1]}\t{test_batch_size}\t{test_batch_history[0]}\t{test_batch_history[1]}'
+
+    return log_history
 
 def update_history(
     history,

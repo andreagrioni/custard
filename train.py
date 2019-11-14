@@ -6,45 +6,46 @@ import network
 import math
 import tempfile
 import misc
+
 '''
 train network
 '''
 
 
-def network_callbacks(
-    log_name,
-    dest_path
-    ):
-    '''
-    define callbacks funtions
-    to run during network
-    training
+# def network_callbacks(
+#     log_name,
+#     dest_path
+#     ):
+#     '''
+#     define callbacks funtions
+#     to run during network
+#     training
 
-    log_name=lof file name
-    dest_path=file destination path
-    '''
-    log_path = os.path.join(
-        dest_path,
-        log_name
-    )
+#     log_name=lof file name
+#     dest_path=file destination path
+#     '''
+#     log_path = os.path.join(
+#         dest_path,
+#         log_name
+#     )
 
-    Early_stop = keras.callbacks.EarlyStopping(
-        monitor='val_accuracy',
-        min_delta=0,
-        patience=5,
-        verbose=0,
-        mode='auto',
-        baseline=None,
-        restore_best_weights=False
-    )
+#     Early_stop = keras.callbacks.EarlyStopping(
+#         monitor='val_accuracy',
+#         min_delta=0,
+#         patience=5,
+#         verbose=0,
+#         mode='auto',
+#         baseline=None,
+#         restore_best_weights=False
+#     )
 
-    csv_logger = keras.callbacks.CSVLogger(
-        log_path,
-        separator="\t",
-        append=False
-    )
+    # csv_logger = keras.callbacks.CSVLogger(
+    #     log_path,
+    #     separator="\t",
+    #     append=False
+    # )
 
-    return [csv_logger, Early_stop]
+#    return [Early_stop]
 
 
 def run_epochs(
@@ -53,57 +54,73 @@ def run_epochs(
     batch_size,
     iteration,
     batches_limit,
-    tmp_path,
-    log_history
+    tmp_path
     ):
     '''
     fun controls one cycle training
     
     paramenters:
+    model=trainable network
     training_set=train set as ohe array
-    batches_limit=limit train to N batches
+    batc_size=samples per minibatches
     iteration=iteration number
-    log_history=df of train history
+    batches_limit=limit train to N batches
+    tmp_path=temporary directory
     '''
+    csv_log = os.path.join(
+        tmp_path, f"{iteration}_train.csv"
+    )
+    f = open(csv_log, 'w')
+    header = '\t'.join([
+        "iteration",
+        "batch",
+        "train_batch_size",
+        "train_loss",
+        "train_acc",
+        "val_batch_size",
+        "val_loss",
+        "val_acc"
+        ])
+    f.write(header + "\n")
+    
     for batch, batch_data in enumerate(
-        train_set
+        train_set, start=1
         ):
-        X_train, y_train = batch_data
-        log_name = f'{iteration}_{batch}_train.csv'
 
-        callbacks = network_callbacks(
-            log_name,
-            tmp_path
-        )
+        X_train_ohe, X_test_ohe, y_train_dummies, y_test_dummies = batch_data
 
-        history = network.fit_network(
+        history = network.train_on_batch_network(
             model,
-            X_train,
-            y_train,
-            batch_size,
-            callbacks
+            X_train_ohe,
+            y_train_dummies,
         )
-        
-        batch_history = history.history
 
-        misc.print_history(
+        train_batch_history = history
+
+        history = network.test_on_batch_network(
+            model,
+            X_test_ohe,
+            y_test_dummies,
+        )
+
+        test_batch_history = history
+        
+        log_csv = misc.print_history(
             iteration,
             batch,
             len(train_set),
-            batch_history
+            batches_limit,
+            X_train_ohe.shape[0],
+            X_test_ohe.shape[0],
+            train_batch_history,
+            test_batch_history
         )
-        
-
-        # # UPDATE HISTORY
-        # log_history = update_history(
-        #         batch_history,
-        #         log_history,
-        #         iteration
-        #         )
+        f.write(log_csv + '\n')
 
         if batch >= batches_limit:
             break
-    return log_history
+    f.close()
+    return None
 
 
 def run_iterations(
@@ -124,30 +141,25 @@ def run_iterations(
     batches_limit=train each iteration 
     on N batches.
     '''
-    log_history = pd.DataFrame()
+
     for iteration in range(
-        0, iterations
+        0, iterations + 1
     ):
+        print()
         print("iteration:",
         iteration, "of total:",
-        iterations, sep="\t")
-        print("\tbatch limit:",
-        batches_limit, sep="\t")
+        iterations, "batches_limit",batches_limit, sep="\t")
 
-        history = run_epochs(
+        run_epochs(
             model=model,
             train_set=train_set,
             batch_size=batch_size,
             iteration=iteration,
             batches_limit=batches_limit,
             tmp_path=tmp_name,
-            log_history=log_history
         )
-        log_history = update_history(
-                history,
-                log_history
-                )
-    return log_history, model
+
+    return model
 
 
 def train_network(
@@ -180,7 +192,7 @@ def train_network(
     if not batches_limit:
         batches_limit = len(train_set)
     # RUN ITERATIONS MODULE
-    history, model = run_iterations(
+    model = run_iterations(
             model=model,
             train_set=train_set,
             batch_size=batch_size,
@@ -188,7 +200,7 @@ def train_network(
             batches_limit=batches_limit,
             tmp_name=tmpdirname
     )
-    return history, model
+    return model
 
 if __name__ == "__main__":
     pass

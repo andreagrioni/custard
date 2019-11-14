@@ -18,38 +18,34 @@ def data_gen(
 
 def do_training(OPTIONS):
     train_opt = OPTIONS['train']
-    # load dataset
+    # train settings
+    batch_size = train_opt['batch_size']
+    batches_limit = train_opt['batches_limit']
+    iterations = train_opt['iterations']
     input_file = OPTIONS['input_file']
-    batch_size = OPTIONS['train']['batch_size']
-    dataset = data_gen(
-        input_file, batch_size
-        )
+
+    # load dataset
+    dataset = data_gen(input_file, batch_size)
     # generate network
     model = network.build_network()
     # train network
-    history, model = train.train_network(
+    model = train.train_network(
         model,
         dataset,
-        batches_limit=train_opt[
-            'batches_limit'
-            ],
-        iterations=train_opt['iterations']
+        batches_limit=batches_limit,
+        iterations=iterations
     )
     # save model
     network.save_model(model, os.getcwd())
-    return history, model
+    return model
 
 
 if __name__ == "__main__":
 
     OPTIONS = misc.load_options()    
     
-    os.chdir(OPTIONS['working_dir'])
-    model_name = OPTIONS['model']['name']
-    model_path = OPTIONS['model']['path']    
-    
-    misc.create_log(OPTIONS)
-    misc.options_log(OPTIONS)
+    #model_name = OPTIONS['model']['name']
+    #model_path = OPTIONS['model']['path']    
 
     if OPTIONS['flags']['train']:
         history, model = do_training(
