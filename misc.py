@@ -6,17 +6,13 @@ import os
 def load_options():
     OPTIONS = {
         'flags' : {
-            'train' : True,
+            'train' : False,
             'predict' : False,
-            'evaluate' : False
+            'evaluate' : True
         },
         'threshold' : 0.5,
         'input_file' : '/home/angri/Desktop/projects/custard_testing/custard_toy.tsv',
         'working_dir' : '/home/angri/Desktop/projects/custard_testing/',
-        'model' : {
-            'name' : None,
-            'path' : None
-        },
         'log' : {
             'level' : 'debug',
             'name' : 'test_logging.txt'
@@ -26,8 +22,11 @@ def load_options():
             'epochs' : 10,
             'batch_size' : 32,
             'batches_limit' : 30,
-            'neg_increments' : False,
             'classes' : 3
+        },
+        'evaluate' : {
+            'model' : 'my_model.h5',
+            'model_dir' : '/home/angri/Desktop/projects/custard_testing/'
         }
     }
 

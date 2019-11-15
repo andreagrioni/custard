@@ -103,12 +103,13 @@ def make_sets_ohe(
 
 def load_dataset(
     target_tsv,
-    batch_size,
+    batch_size=32,
     scope='training'
     ):
     '''
     fun loads connection table as pandas df,
-    and return 2 df of connections and labels.
+    and return a list containing minibatches
+    of connections as ohe (features) and labels.
 
     parameters:
     dataset=custard input tsv file
@@ -127,27 +128,18 @@ def load_dataset(
     df_ohe = make_sets_ohe(df)
     df_ohe_batches, df_ohe_labels = split_df(df_ohe, batch_size)
 
-    if scope == 'training':
-        train_set = list()
-        for number, batch in enumerate(
-            zip(df_ohe_batches, df_ohe_labels)
-            ):
+    mini_batches_set = list()
+    for number, batch in enumerate(
+        zip(df_ohe_batches, df_ohe_labels)
+        ):
+        if scope == 'training':
             dataset = split_train_val_set(batch)
-
-            train_set.append(
-                dataset
-            )
-
-        return train_set
-
-    elif scope in ['evaluation', 'predict']:
-        return (
-            df_connections,
-            df_labels
-            )
-    else:
-        logging.error(f'unknown scope for load dataset: {scope}')
-        raise Exception(f'Unknown scope {scope}')
+        else:
+            dataset = batch
+        mini_batches_set.append(
+            dataset
+        )
+    return mini_batches_set
 
 # author: http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
 def chunk_marks(nrows, chunk_size):

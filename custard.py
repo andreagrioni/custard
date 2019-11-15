@@ -40,22 +40,38 @@ def do_training(OPTIONS):
     return model
 
 
+def do_evaluation(OPTIONS):
+    eval_opt = OPTIONS['evaluation']
+    # train settings
+    batch_size = train_opt['batch_size']
+    input_file = OPTIONS['input_file']
+    # load dataset
+    dataset = data_gen(input_file, batch_size)
+    # generate network
+    model = predict.model_predict(
+        model, dataset, batch_size=batch_size
+    )
+
+
 if __name__ == "__main__":
 
     OPTIONS = misc.load_options()    
-    
-    #model_name = OPTIONS['model']['name']
-    #model_path = OPTIONS['model']['path']    
 
     if OPTIONS['flags']['train']:
         model = do_training(
             OPTIONS
             )
 
-    if OPTIONS['flags']['predict']:
+    if OPTIONS['flags']['evaluate']:
+        evaluate = do_evaluation(
+            OPTIONS
+        )
+        
         X_true, y_true = data_gen(
-            input_file, scope='predict'
+            input_file,
+            scope='predict'
             )
+        
         model = predict.load(
             model_path, model_name
             )
@@ -64,7 +80,6 @@ if __name__ == "__main__":
             X_true
         )
 
-    if OPTIONS['flags']['evaluate']:
         y_pred_pos = y_pred[ : , 1]
         y_true_pos = y_true[: , 1]
         evaluate.evaluate_model(
@@ -74,3 +89,4 @@ if __name__ == "__main__":
             output_dir=None,
             json_name='metrics'
         )
+

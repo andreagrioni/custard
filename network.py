@@ -203,55 +203,49 @@ def train_on_batch_network(
 
     return history
 
+
+def predict_on_batch_network(
+    model, X_test
+    ):
+    '''
+    fun predict on input minibatch
+
+    paramenters:
+    model=input model
+    X_test=db to predict
+    '''
+    predictions = model.predict_on_batch(
+        X_test
+    )
+    return predictions
+
+
 def test_on_batch_network(
     model,
     X_test,
     y_test,
     ):
     
-    history = model.train_on_batch(
+    history = model.test_on_batch(
         X_test, y_test, sample_weight=None,
         reset_metrics=False
         )
 
     return history
 
-# def fit_network(
-#     model,
-#     X_train,
-#     y_train,
-#     batch_size
-#     ):
-#     '''
-#     fun fits the model with 
-#     the training set.
 
-#     paramenters:
-#     X_train=train set
-#     y_train=label train set
-#     batch_size=int
-#     '''
-#     history = model.fit(
-#         x=X_train,
-#         y=y_train,
-#         batch_size=batch_size,
-#         epochs=1,
-#         verbose=0,
-#         #callbacks=callbacks,
-#         validation_split=0.2,
-#         #validation_data=(X_val, y_val),
-#         shuffle=True,
-#         class_weight=None,
-#         sample_weight=None,
-#         initial_epoch=0,
-#         steps_per_epoch=None,
-#         # validation_steps=None,
-#         # validation_freq=[2,5,10],
-#         #max_queue_size=10,
-#         #workers=0,
-#         #use_multiprocessing=True
-#     )
-#     return history
+def load_model_network(model_file_path):
+    '''
+    load h5 model.
+    
+    paramenters:
+    path=dir path of model
+    name=model file name
+    '''    
+    print(model_file_path)
+    model = keras.models.load_model(model_file_path)
+    return model
+
 
 def save_model(
     model, path, name='my_model.h5'

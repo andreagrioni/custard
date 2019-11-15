@@ -3,19 +3,7 @@ from tensorflow import keras
 from tensorflow.keras.models import load_model
 import pre_processing
 import os
-
-
-def load(path, name='my_model.h5'):
-    '''
-    load h5 model.
-    
-    paramenters:
-    path=dir path of model
-    name=model file name
-    '''
-    model_file_path = os.path.join(path, name)
-    model = load_model(model_file_path)
-    return model
+import network
 
 
 def model_predict(
@@ -30,27 +18,24 @@ def model_predict(
     dataset=one hot encoding array
     batch_size=dataset batch size
     '''
-    predictions = model.predict(
-        dataset,
-        batch_size=batch_size,
-        verbose=0,
-        steps=None,
-        callbacks=None,
-        max_queue_size=10,
-        workers=1,
-        use_multiprocessing=False
+    for batch, batch_data in enumerate(
+        dataset, start=1):
+        X_test, y_test = batch_data
+        
+        predictions = network.predict_on_batch_network(
+            model, X_test
         )
+        print(predictions)
     return predictions
 
 
 if __name__ == "__main__":
-    path = './'
-    target_tsv = "pre_processing_test.tsv"
-    model = load(path)
-    df_ohe, df_labels = pre_processing.load_dataset(
-        target_tsv,
-        scope='evaluation'
+    path = '/home/angri/Desktop/projects/custard_testing/my_model.h5'
+    target_tsv = "/home/angri/Desktop/projects/custard_testing/custard_toy.tsv"
+    model = network.load_model_network(path)
+    dataset = pre_processing.load_dataset(
+        target_tsv, scope='evaluate'
         )
     predictions = model_predict(
-    model, df_ohe, batch_size=32
+    model, dataset
     )
