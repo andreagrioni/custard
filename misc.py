@@ -7,8 +7,8 @@ def load_options():
     OPTIONS = {
         'flags' : {
             'train' : False,
-            'predict' : False,
-            'evaluate' : True
+            'evaluate' : True,
+            'predict' : False
         },
         'threshold' : 0.5,
         'input_file' : '/home/angri/Desktop/projects/custard_testing/custard_toy.tsv',
@@ -22,11 +22,13 @@ def load_options():
             'epochs' : 10,
             'batch_size' : 32,
             'batches_limit' : 30,
-            'classes' : 3
+            'classes' : 2
         },
         'evaluate' : {
             'model' : 'my_model.h5',
-            'model_dir' : '/home/angri/Desktop/projects/custard_testing/'
+            'model_dir' : '/home/angri/Desktop/projects/custard_testing/',
+            'batch_size' : 32,
+            'metrics_filename' : 'test'
         }
     }
 
@@ -120,23 +122,24 @@ def input_paramenters_checkpoint(
         logging.error(f'input file does not exit: {OPTIONS["input_file"]}')
         raise FileNotFoundError(OPTIONS['input_file'])
         raise SystemExit
-    if OPTIONS['model']['path'] and OPTIONS['model']['name']:
+
+    if OPTIONS['evaluate']['model_dir'] and OPTIONS['evaluate']['model']:
         model_path = os.path.join(
-            OPTIONS['model']['path'],
-            OPTIONS['model']['name']
+            OPTIONS['evaluate']['model_dir'],
+            OPTIONS['evaluate']['model']
             )
         if not os.path.exists(
-            OPTIONS['model']['path']
+            OPTIONS['evaluate']['model_dir']
             ):
             logging.error(
-    f'model dir does not exit: {OPTIONS["model"]["path"]}'
+    f'model dir does not exit: {OPTIONS["evaluate"]["model_dir"]}'
                 )
             raise FileNotFoundError(
-        OPTIONS['model']['path']
+        OPTIONS["evaluate"]["model_dir"]
         )
             raise SystemExit
         
-        if not os.path.exists(model_path):
+        if not os.path.exists(model_path) and not OPTIONS['flags']['train']:
             logging.error(
     f'model file does not exit: {model_path}')
             raise FileNotFoundError(

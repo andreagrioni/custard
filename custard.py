@@ -3,7 +3,7 @@ import network
 import train
 import pre_processing
 import predict
-import evaluate
+import evaluate_metrics
 import misc
 
 def data_gen(
@@ -40,18 +40,29 @@ def do_training(OPTIONS):
     return model
 
 
-def do_evaluation(OPTIONS):
-    eval_opt = OPTIONS['evaluation']
-    # train settings
-    batch_size = train_opt['batch_size']
+def do_prediction(
+    OPTIONS,
+    dataset
+    ):
+    eval_opt = OPTIONS['evaluate']
+    batch_size = eval_opt['batch_size']
     input_file = OPTIONS['input_file']
-    # load dataset
-    dataset = data_gen(input_file, batch_size)
-    # generate network
-    model = predict.model_predict(
+
+    # load model
+    model_file_path = os.path.join(
+        eval_opt['model_dir'],
+        eval_opt['model']
+    )
+    model = network.load_model_network(
+            model_file_path
+            )
+
+    # make predictions
+    predictions = predict.model_predict(
         model, dataset, batch_size=batch_size
     )
 
+    return predictions
 
 if __name__ == "__main__":
 
@@ -62,31 +73,26 @@ if __name__ == "__main__":
             OPTIONS
             )
 
-    if OPTIONS['flags']['evaluate']:
-        evaluate = do_evaluation(
-            OPTIONS
-        )
-        
-        X_true, y_true = data_gen(
+    if OPTIONS['flags']['evaluate'] or OPTIONS['flags']['predict']:
+        # load dataset
+        eval_opt = OPTIONS['evaluate']
+        batch_size = eval_opt['batch_size']
+        input_file = OPTIONS['input_file']
+        metrics_filename=eval_opt['metrics_filename']
+        dataset = data_gen(
             input_file,
-            scope='predict'
-            )
-        
-        model = predict.load(
-            model_path, model_name
-            )
-        y_pred = predict.model_predict(
-            model,
-            X_true
+            batch_size,
+            scope='evaluate'
         )
 
-        y_pred_pos = y_pred[ : , 1]
-        y_true_pos = y_true[: , 1]
-        evaluate.evaluate_model(
-            y_true_pos,
-            y_pred_pos,
-            threshold,
-            output_dir=None,
-            json_name='metrics'
+        predictions = do_prediction(
+            OPTIONS,
+            dataset
         )
 
+    if OPTIONS['flags']['evaluate']:
+
+        evaluate_metrics.evaluate(
+            predictions,
+            json_name=metrics_filename
+        )
