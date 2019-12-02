@@ -15,7 +15,7 @@ def load_options(json_filepath=None):
             "working_dir": "/home/angri/Desktop/project/custard_test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
-                "iterations": 30,
+                "iterations": 10,
                 "epochs": 10,
                 "batch_size": 32,
                 "batches_limit": 30,

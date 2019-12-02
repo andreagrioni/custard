@@ -47,31 +47,31 @@ def build_architecture(classes=2, dim_1=50, dim_2=20):
     model.add(keras.layers.BatchNormalization())
     model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-    #model.add(keras.layers.Dropout(0.2))
+    # model.add(keras.layers.Dropout(0.2))
 
     model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same",))
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.MaxPooling2D(pool_size=(6, 6)))
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-    #model.add(keras.layers.Dropout(0.2))
+    # model.add(keras.layers.Dropout(0.2))
     model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same"))
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.MaxPooling2D(pool_size=(6, 6)))
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-    #model.add(keras.layers.Dropout(0.2))
+    # model.add(keras.layers.Dropout(0.2))
 
     # model.add(
     #     keras.layers.Flatten()
     # )
 
     #    need further investigation
-    
+
     model.add(keras.layers.GlobalAveragePooling2D())
 
     model.add(keras.layers.Dense(512))
     model.add(keras.layers.BatchNormalization())
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-#    model.add(keras.layers.Dropout(0.2))
+    #    model.add(keras.layers.Dropout(0.2))
 
     # model.add(keras.layers.Dense(300))
     # model.add(keras.layers.BatchNormalization())
