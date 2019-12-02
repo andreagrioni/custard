@@ -4,10 +4,10 @@ import numpy as np
 import misc
 import logging
 
-'''
+"""
 this module creates input dataset
 for custard
-'''
+"""
 
 
 def watson_crick(x_nt, y_nt, alphabet=None):
@@ -21,33 +21,24 @@ def watson_crick(x_nt, y_nt, alphabet=None):
     alphabet = dict of nt_pair:score
     """
     if not alphabet:
-        alphabet = {
-            "AT": 1,
-            "TA": 1,
-            "GC": 1,
-            "CG": 1
-            }
+        alphabet = {"AT": 1, "TA": 1, "GC": 1, "CG": 1}
     pair = x_nt + y_nt
     return alphabet.get(pair, 0)
 
 
-def to_ohe(
-    df,
-    dim_1,
-    dim_2
-    ):
-    '''
+def to_ohe(df, dim_1, dim_2):
+    """
     fun transform input database to
     one hot encoding array.
 
     paramenters:
     df=input dataset
-    '''
+    """
     samples = df.shape[0]
     ohe_shape = (samples, dim_1, dim_2, 1)
 
-    x_sequence = df.iloc[ : , 0].values.tolist()
-    y_sequence = df.iloc[ : , 1].values.tolist()
+    x_sequence = df.iloc[:, 0].values.tolist()
+    y_sequence = df.iloc[:, 1].values.tolist()
 
     ohe_matrix = np.zeros(ohe_shape)
 
@@ -56,33 +47,22 @@ def to_ohe(
             x_seq_nt = x_sequence[sample][x_seq_pos]
             for y_seq_pos in range(0, ohe_shape[2]):
                 y_seq_nt = y_sequence[sample][y_seq_pos]
-                ohe_matrix[
-                    sample,
-                    x_seq_pos,
-                    y_seq_pos,
-                    0] = watson_crick(
+                ohe_matrix[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
                     x_seq_nt, y_seq_nt
                 )
     return ohe_matrix
 
-def split_train_val_set(
-    dataset_ohe, validation_split = 0.2
-    ):
+
+def split_train_val_set(dataset_ohe, validation_split=0.2):
     batch_features, batch_label = dataset_ohe
     X_train, X_test, y_train, y_test = train_test_split(
-        batch_features, batch_label,
-        test_size=validation_split,
-        random_state=1989)
-    return (X_train, X_test,
-        y_train, y_test)
+        batch_features, batch_label, test_size=validation_split, random_state=1989
+    )
+    return (X_train, X_test, y_train, y_test)
 
 
-def make_sets_ohe(
-    dataset,
-    dim_1,
-    dim_2
-    ):
-    '''
+def make_sets_ohe(dataset, dim_1, dim_2):
+    """
     fun converts input batch into 
     one hot encoding of features
     and labels. output a tuple of 
@@ -90,31 +70,19 @@ def make_sets_ohe(
 
     paramenters:
     batch=mini-batch as Pandas df
-    '''
-    batch_features = dataset.drop(
-        ['label'],
-        axis = 1
-    )
-    batch_label = dataset['label']
+    """
+    batch_features = dataset.drop(["label"], axis=1)
+    batch_label = dataset["label"]
 
-    X_train_ohe = to_ohe(batch_features, 
-    dim_1,
-    dim_2)
+    X_train_ohe = to_ohe(batch_features, dim_1, dim_2)
 
-    y_train_dummies = pd.get_dummies(
-        batch_label ).to_numpy()
+    y_train_dummies = pd.get_dummies(batch_label).to_numpy()
 
-    return ( X_train_ohe, y_train_dummies )
+    return (X_train_ohe, y_train_dummies)
 
 
-def load_dataset(
-    target_tsv,
-    batch_size=32,
-    dim_1,
-    dim_2,
-    scope='training'
-    ):
-    '''
+def load_dataset(target_tsv, batch_size=32, dim_1=50, dim_2=20, scope="training"):
+    """
     fun loads connection table as pandas df,
     and return a list containing minibatches
     of connections as ohe (features) and labels.
@@ -122,50 +90,48 @@ def load_dataset(
     parameters:
     dataset=custard input tsv file
     batch_size=split dataset into mini-batches
-    '''
+    """
     try:
-        df = pd.read_csv(
-            target_tsv,
-            sep='\t',
-            names=['x','y','label']
-            ).sample(frac=1).reset_index(drop=True)
+        df = (
+            pd.read_csv(target_tsv, sep="\t", names=["x", "y", "label"])
+            .sample(frac=1)
+            .reset_index(drop=True)
+        )
     except Exception as e:
         logging.error("Exception occured", exc_info=True)
         raise SystemExit("Failed to load dataset as pandas DataFrame")
-    
+
     df_ohe = make_sets_ohe(df, dim_1, dim_2)
     df_ohe_batches, df_ohe_labels = split_df(df_ohe, batch_size)
 
     mini_batches_set = list()
-    for number, batch in enumerate(
-        zip(df_ohe_batches, df_ohe_labels)
-        ):
-        if scope == 'training':
+    for number, batch in enumerate(zip(df_ohe_batches, df_ohe_labels)):
+        if scope == "training":
             dataset = split_train_val_set(batch)
         else:
             dataset = batch
-        mini_batches_set.append(
-            dataset
-        )
+        mini_batches_set.append(dataset)
     return mini_batches_set
+
 
 # author: http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
 def chunk_marks(nrows, chunk_size):
-    '''
+    """
     fun generates a 1D array that indicate
     where to split the df
     
     paramenters:
     nrows=df shape
     chunk_size=batch size
-    '''
-    split_arrays = range(1 * chunk_size,
-    (nrows // chunk_size + 1) * chunk_size, chunk_size
+    """
+    split_arrays = range(
+        1 * chunk_size, (nrows // chunk_size + 1) * chunk_size, chunk_size
     )
     return split_arrays
 
+
 def split_df(df, batches_size):
-    '''
+    """
     fun splits input pandas df into 
     batches. Returns a list of 
     subarrays.
@@ -173,17 +139,18 @@ def split_df(df, batches_size):
     paramenters:
     df=input pandas df
     batches_size=chunk size
-    '''
+    """
     df_ohe, df_labels = df
-    batches_points = list(
-        chunk_marks(df_ohe.shape[0], batches_size)
-        )
+    batches_points = list(chunk_marks(df_ohe.shape[0], batches_size))
     df_ohe_batches = np.split(df_ohe, batches_points)
     df_ohe_labels = np.split(df_labels, batches_points)
-    
-    logging.info(f"split dataframe of shape {df_ohe.shape} into {len(batches_points)} +~ 1 mini-batches of size {batches_size}")
-    
+
+    logging.info(
+        f"split dataframe of shape {df_ohe.shape} into {len(batches_points)} +~ 1 mini-batches of size {batches_size}"
+    )
+
     return df_ohe_batches, df_ohe_labels
+
 
 if __name__ == "__main__":
     target_tsv = "pre_processing_test.tsv"

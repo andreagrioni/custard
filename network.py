@@ -8,7 +8,7 @@ network model.
 """
 
 
-def build_network(classes=2, dim_1, dim_2):
+def build_network(classes=2, dim_1=50, dim_2=20):
     """
     fun is a pipeline of steps that 
     build a trainable network.
@@ -19,7 +19,7 @@ def build_network(classes=2, dim_1, dim_2):
     return model
 
 
-def build_architecture(classes, dim_1=50, dim_2=20)):
+def build_architecture(classes=2, dim_1=50, dim_2=20):
     """
     fun creates the network architecture 
     necessary for the training and 
@@ -41,42 +41,43 @@ def build_architecture(classes, dim_1=50, dim_2=20)):
             kernel_size=(6, 6),
             padding="same",
             data_format="channels_last",
-            input_shape=array_shape
+            input_shape=array_shape,
         )
     )
     model.add(keras.layers.BatchNormalization())
     model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-    model.add(keras.layers.Dropout(0.2))
+    #model.add(keras.layers.Dropout(0.2))
 
-    model.add(keras.layers.Conv2D(filters=64, kernel_size=(6, 6), padding="same",))
+    model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same",))
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(keras.layers.MaxPooling2D(pool_size=(6, 6)))
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-    model.add(keras.layers.Dropout(0.2))
-    model.add(keras.layers.Conv2D(filters=32, kernel_size=(6, 6), padding="same"))
+    #model.add(keras.layers.Dropout(0.2))
+    model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same"))
     model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(keras.layers.MaxPooling2D(pool_size=(6, 6)))
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-    model.add(keras.layers.Dropout(0.2))
+    #model.add(keras.layers.Dropout(0.2))
 
     # model.add(
     #     keras.layers.Flatten()
     # )
 
     #    need further investigation
+    
     model.add(keras.layers.GlobalAveragePooling2D())
 
     model.add(keras.layers.Dense(512))
     model.add(keras.layers.BatchNormalization())
-
     model.add(keras.layers.LeakyReLU(alpha=0.3))
-    model.add(keras.layers.Dropout(0.2))
-    model.add(keras.layers.Dense(300))
-    model.add(keras.layers.BatchNormalization())
+#    model.add(keras.layers.Dropout(0.2))
 
-    model.add(keras.layers.LeakyReLU(alpha=0.3))
-    model.add(keras.layers.Dropout(0.2))
+    # model.add(keras.layers.Dense(300))
+    # model.add(keras.layers.BatchNormalization())
+
+    # model.add(keras.layers.LeakyReLU(alpha=0.3))
+    model.add(keras.layers.Dropout(0.5))
     model.add(keras.layers.Dense(classes))
     model.add(keras.layers.Softmax(axis=-1))
     return model

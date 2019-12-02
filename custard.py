@@ -10,7 +10,11 @@ import sys
 
 def data_gen(target_file, batch_size, dim_1, dim_2, scope="training"):
     train_set = pre_processing.load_dataset(
-        target_tsv=target_file, batch_size=batch_size, scope=scope,
+        target_tsv=target_file,
+        batch_size=batch_size,
+        dim_1=dim_1,
+        dim_2=dim_2,
+        scope=scope,
     )
     return train_set
 

@@ -9,23 +9,23 @@ def load_options(json_filepath=None):
         OPTIONS = json.load(json_filepath)
     else:
         OPTIONS = {
-            "flags": {"train": False, "evaluate": True, "predict": False},
+            "flags": {"train": True, "evaluate": False, "predict": False},
             "threshold": 0.5,
-            "input_file": "/home/angri/Desktop/projects/custard_testing/custard_toy.tsv",
-            "working_dir": "/home/angri/Desktop/projects/custard_testing/",
+            "input_file": "/home/angri/Desktop/project/custard/test/test.tsv",
+            "working_dir": "/home/angri/Desktop/project/custard_test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
-                "iterations": 5,
+                "iterations": 30,
                 "epochs": 10,
                 "batch_size": 32,
                 "batches_limit": 30,
                 "classes": 2,
-                "dim_1": 50,
+                "dim_1": 200,
                 "dim_2": 20,
             },
             "evaluate": {
                 "model": "my_model.h5",
-                "model_dir": "/home/angri/Desktop/projects/custard_testing/",
+                "model_dir": "/home/angri/Desktop/project/custard_test/",
                 "batch_size": 32,
                 "metrics_filename": "test",
             },
