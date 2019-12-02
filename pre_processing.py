@@ -32,7 +32,9 @@ def watson_crick(x_nt, y_nt, alphabet=None):
 
 
 def to_ohe(
-    df
+    df,
+    dim_1,
+    dim_2
     ):
     '''
     fun transform input database to
@@ -42,7 +44,7 @@ def to_ohe(
     df=input dataset
     '''
     samples = df.shape[0]
-    ohe_shape = (samples, 50, 20, 1)
+    ohe_shape = (samples, dim_1, dim_2, 1)
 
     x_sequence = df.iloc[ : , 0].values.tolist()
     y_sequence = df.iloc[ : , 1].values.tolist()
@@ -76,7 +78,9 @@ def split_train_val_set(
 
 
 def make_sets_ohe(
-    dataset
+    dataset,
+    dim_1,
+    dim_2
     ):
     '''
     fun converts input batch into 
@@ -93,7 +97,9 @@ def make_sets_ohe(
     )
     batch_label = dataset['label']
 
-    X_train_ohe = to_ohe(batch_features)
+    X_train_ohe = to_ohe(batch_features, 
+    dim_1,
+    dim_2)
 
     y_train_dummies = pd.get_dummies(
         batch_label ).to_numpy()
@@ -104,6 +110,8 @@ def make_sets_ohe(
 def load_dataset(
     target_tsv,
     batch_size=32,
+    dim_1,
+    dim_2,
     scope='training'
     ):
     '''
@@ -125,7 +133,7 @@ def load_dataset(
         logging.error("Exception occured", exc_info=True)
         raise SystemExit("Failed to load dataset as pandas DataFrame")
     
-    df_ohe = make_sets_ohe(df)
+    df_ohe = make_sets_ohe(df, dim_1, dim_2)
     df_ohe_batches, df_ohe_labels = split_df(df_ohe, batch_size)
 
     mini_batches_set = list()
