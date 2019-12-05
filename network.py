@@ -19,7 +19,36 @@ def build_network(classes=2, dim_1=50, dim_2=20):
     return model
 
 
-def build_architecture(classes=2, dim_1=50, dim_2=20):
+def encoder_sequence_branch(sequence_input):
+
+    x = Conv1D(filters=128, kernel_size=6)(sequence_input)
+    x = LeakyReLU()(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling1D(pool_size=2, padding="same")(x)
+    x = Dropout(rate=0.5, noise_shape=None, seed=None)(x)
+
+    x = Conv1D(filters=tmp_filter_num, kernel_size=15, strides=1, padding="same")(x)
+    x = LeakyReLU()(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling1D(pool_size=2, padding="same")(x)
+    x = Dropout(rate=0.5, noise_shape=None, seed=None)(x)
+
+    x = Conv1D(
+        filters=int(tmp_filter_num / 2), kernel_size=10, strides=1, padding="same"
+    )(x)
+    x = LeakyReLU()(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling1D(pool_size=2, padding="same")(x)
+    x = Dropout(rate=0.5, noise_shape=None, seed=None)(x)
+
+    # x = Bidirectional(LSTM(16, return_sequences=True, activation='tanh', recurrent_activation='hard_sigmoid', dropout=tmp_dropout, recurrent_dropout=tmp_dropout))(x)
+    # x = Bidirectional(LSTM(8, return_sequences=True, activation='tanh', recurrent_activation='hard_sigmoid', dropout=tmp_dropout, recurrent_dropout=tmp_dropout))(x)
+    conservation_output = Flatten()(x)
+
+    return conservation_output
+
+
+def build_2D_branch(sequence_input=None, classes=2, dim_1=50, dim_2=20):
     """
     fun creates the network architecture 
     necessary for the training and 
@@ -31,42 +60,66 @@ def build_architecture(classes=2, dim_1=50, dim_2=20):
     parameters:
     classes=number of classes
     """
-    model = keras.models.Sequential()
+    # model = keras.models.Sequential()
 
-    array_shape = (dim_1, dim_2, 1)
+    # array_shape = (dim_1, dim_2, 1)
 
-    model.add(
-        keras.layers.Conv2D(
-            filters=128,
-            kernel_size=(6, 6),
-            padding="same",
-            data_format="channels_last",
-            input_shape=array_shape,
+    model = keras.layers.Conv2D(
+        filters=128, kernel_size=(6, 6), padding="same", data_format="channels_last"
+    )(sequence_input)
+
+    # model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
+    # model.add(keras.layers.BatchNormalization())
+    # model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    # model.add(keras.layers.Dropout(0.2))
+
+    # model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same",))
+    # model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
+    # model.add(keras.layers.BatchNormalization())
+    # model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    # model.add(keras.layers.Dropout(0.2))
+
+    # model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same"))
+    # model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
+    # model.add(keras.layers.BatchNormalization())
+    # model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    # model.add(keras.layers.Dropout(0.2))
+
+    # model.add(keras.layers.Flatten())
+    model = keras.layers.Flatten()(model)
+    return model
+
+
+def build_multi_braches(classes=2, dim_1=50, dim_2=20):
+    """
+    create multi branches architecture
+    """
+
+    sequence_outputs = []
+    sequence_inputs = []
+
+    for i in range(0, 3):
+
+        sequence_input = keras.layers.Input(shape=(dim_1, dim_2, 1))
+        sequence_outputs.append(
+            build_2D_branch(
+                sequence_input=sequence_input, classes=2, dim_1=50, dim_2=20
+            )
         )
+
+    return sequence_inputs, sequence_outputs
+
+
+def build_architecture(classes=2, dim_1=50, dim_2=20, branches=2):
+    """
+    create single branch model with 2D dotmatrix.
+    """
+
+    sequence_inputs, sequence_outputs = build_multi_braches(
+        classes=2, dim_1=50, dim_2=20
     )
 
-    model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
-    model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(keras.layers.Dropout(0.2))
-
-    model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same",))
-    model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))    
-    model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(keras.layers.Dropout(0.2))
-
-    model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same"))
-    model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))    
-    model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(keras.layers.Dropout(0.2))
-
-    model.add( keras.layers.Flatten() )
-
-    #    need further investigation
-
-    #model.add(keras.layers.GlobalAveragePooling2D())
+    model = keras.layers.concatenate(sequence_outputs)
 
     model.add(keras.layers.Dense(512))
     model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
@@ -75,6 +128,8 @@ def build_architecture(classes=2, dim_1=50, dim_2=20):
 
     model.add(keras.layers.Dense(classes))
     model.add(keras.layers.Softmax(axis=-1))
+
+    classification_model = Model(sequence_inputs, model)
     return model
 
 
