@@ -6,7 +6,8 @@ import json
 
 def load_options(json_filepath=None):
     if json_filepath:
-        OPTIONS = json.load(json_filepath)
+        with open(json_filepath, 'r') as fp:
+            OPTIONS = json.load(fp)
     else:
         OPTIONS = {
             "flags": {"train": True, "evaluate": False, "predict": False},
