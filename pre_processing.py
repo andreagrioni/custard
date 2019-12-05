@@ -34,23 +34,74 @@ def to_ohe(df, dim_1, dim_2):
     paramenters:
     df=input dataset
     """
+    pos_dict = {"A": 0, "T": 1, "G": 2, "C": 3}
+
     samples = df.shape[0]
-    ohe_shape = (samples, dim_1, dim_2, 1)
+    shape_2d = (samples, dim_1, dim_2, 1)
+    shape_1d_pirna = (samples, dim_2, 4)
+    shape_1d_cons = (samples, dim_2, 1)  # 20nt
+    shape_1d_bind = (samples, dim_1, 4)  # 50nt
 
     x_sequence = df.iloc[:, 0].values.tolist()
     y_sequence = df.iloc[:, 1].values.tolist()
 
-    ohe_matrix = np.zeros(ohe_shape)
+    ohe_matrix_2d = np.zeros(shape_2d)
+    ohe_1d_bind = np.zeros(shape_1d_bind)
+    ohe_1d_pirna = np.zeros(shape_1d_pirna)
 
-    for sample in range(0, ohe_shape[0]):
-        for x_seq_pos in range(0, ohe_shape[1]):
+    for sample in range(0, shape_2d[0]):
+        for x_seq_pos in range(0, shape_2d[1]):
             x_seq_nt = x_sequence[sample][x_seq_pos]
-            for y_seq_pos in range(0, ohe_shape[2]):
+            nt_pos = pos_dict[x_seq_nt]
+            ohe_1d_bind[sample, x_seq_pos, nt_pos] = 1
+            for y_seq_pos in range(0, shape_2d[2]):
                 y_seq_nt = y_sequence[sample][y_seq_pos]
-                ohe_matrix[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
+                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
                     x_seq_nt, y_seq_nt
                 )
-    return ohe_matrix
+                nt_pos = pos_dict[y_seq_nt]
+                ohe_1d_pirna[sample, y_seq_pos, nt_pos] = 1
+
+    return (ohe_matrix_2d, ohe_1d_bind, ohe_1d_pirna)
+
+
+def to_ohe(df, dim_1, dim_2):
+    """
+    fun transform input database to
+    one hot encoding array.
+
+    paramenters:
+    df=input dataset
+    """
+    pos_dict = {"A": 0, "T": 1, "G": 2, "C": 3}
+
+    samples = df.shape[0]
+    shape_2d = (samples, dim_1, dim_2, 1)
+    shape_1d_pirna = (samples, dim_2, 4)
+    shape_1d_cons = (samples, dim_2, 1)  # 20nt
+    shape_1d_bind = (samples, dim_1, 4)  # 50nt
+
+    x_sequence = df.iloc[:, 0].values.tolist()
+    y_sequence = df.iloc[:, 1].values.tolist()
+
+    ohe_matrix_2d = np.zeros(shape_2d)
+    ohe_1d_bind = np.zeros(shape_1d_bind)
+    ohe_1d_pirna = np.zeros(shape_1d_pirna)
+
+    for sample in range(0, shape_2d[0]):
+        for x_seq_pos in range(0, shape_2d[1]):
+            x_seq_nt = x_sequence[sample][x_seq_pos]
+            nt_pos = pos_dict[x_seq_nt]
+            ohe_1d_bind[sample, x_seq_pos, nt_pos] = 1
+            for y_seq_pos in range(0, shape_2d[2]):
+                y_seq_nt = y_sequence[sample][y_seq_pos]
+                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
+                    x_seq_nt, y_seq_nt
+                )
+                nt_pos = pos_dict[y_seq_nt]
+                ohe_1d_pirna[sample, y_seq_pos, nt_pos] = 1
+
+    return (ohe_matrix_2d, ohe_1d_bind, ohe_1d_pirna)
 
 
 def split_train_val_set(dataset_ohe, validation_split=0.2):

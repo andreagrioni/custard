@@ -6,13 +6,13 @@ import json
 
 def load_options(json_filepath=None):
     if json_filepath:
-        with open(json_filepath, 'r') as fp:
+        with open(json_filepath, "r") as fp:
             OPTIONS = json.load(fp)
     else:
         OPTIONS = {
             "flags": {"train": True, "evaluate": False, "predict": False},
             "threshold": 0.5,
-            "input_file": "/home/angri/Desktop/project/custard/test/test.tsv",
+            "input_file": "/home/angri/Desktop/project/custard/test/toy.tsv",
             "working_dir": "/home/angri/Desktop/project/custard_test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
