@@ -12,17 +12,18 @@ def load_options(json_filepath=None):
         OPTIONS = {
             "flags": {"train": True, "evaluate": False, "predict": False},
             "threshold": 0.5,
-            "input_file": "/home/angri/Desktop/project/custard/test/toy.tsv",
+            "input_file": "/home/angri/Desktop/project/custard/test/test.tsv",
             "working_dir": "/home/angri/Desktop/project/custard_test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
                 "iterations": 10,
                 "epochs": 10,
-                "batch_size": 32,
-                "batches_limit": 30,
+                "batch_size": 8,
+                "batches_limit": 10,
                 "classes": 2,
                 "dim_1": 200,
                 "dim_2": 20,
+                "dim_2b": 200,
             },
             "evaluate": {
                 "model": "my_model.h5",
@@ -133,14 +134,14 @@ def input_paramenters_checkpoint(OPTIONS):
 
 
 def print_history(
-    iteration,
-    batch,
-    train_set_size,
-    batch_limit,
-    train_batch_size,
-    test_batch_size,
-    train_batch_history,
-    test_batch_history,
+    iteration=None,
+    batch=None,
+    train_set_size=None,
+    batch_limit=None,
+    train_batch_size=None,
+    test_batch_size=None,
+    train_batch_history=None,
+    test_batch_history=None,
 ):
 
     format_string = f"\titer\t{iteration}\tbatch\t{batch}|{train_set_size}\ttrain_size|{train_batch_size}\tloss|{train_batch_history[0]:.2E}\taccuracy|{train_batch_history[1]:.2f}\tval_size|{test_batch_size}\tloss|{test_batch_history[0]:.2E}\taccuracy|{test_batch_history[1]:.2f}"

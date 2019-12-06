@@ -19,36 +19,20 @@ def build_network(classes=2, dim_1=50, dim_2=20):
     return model
 
 
-def encoder_sequence_branch(sequence_input):
+def build_1D_branch(sequence_input):
 
-    x = Conv1D(filters=128, kernel_size=6)(sequence_input)
-    x = LeakyReLU()(x)
-    x = BatchNormalization()(x)
-    x = MaxPooling1D(pool_size=2, padding="same")(x)
-    x = Dropout(rate=0.5, noise_shape=None, seed=None)(x)
-
-    x = Conv1D(filters=tmp_filter_num, kernel_size=15, strides=1, padding="same")(x)
-    x = LeakyReLU()(x)
-    x = BatchNormalization()(x)
-    x = MaxPooling1D(pool_size=2, padding="same")(x)
-    x = Dropout(rate=0.5, noise_shape=None, seed=None)(x)
-
-    x = Conv1D(
-        filters=int(tmp_filter_num / 2), kernel_size=10, strides=1, padding="same"
-    )(x)
-    x = LeakyReLU()(x)
-    x = BatchNormalization()(x)
-    x = MaxPooling1D(pool_size=2, padding="same")(x)
-    x = Dropout(rate=0.5, noise_shape=None, seed=None)(x)
+    model = keras.layers.Conv1D(
+        filters=12, kernel_size=(6), padding="same", data_format="channels_last"
+    )(sequence_input)
 
     # x = Bidirectional(LSTM(16, return_sequences=True, activation='tanh', recurrent_activation='hard_sigmoid', dropout=tmp_dropout, recurrent_dropout=tmp_dropout))(x)
     # x = Bidirectional(LSTM(8, return_sequences=True, activation='tanh', recurrent_activation='hard_sigmoid', dropout=tmp_dropout, recurrent_dropout=tmp_dropout))(x)
-    conservation_output = Flatten()(x)
+    layer_out = keras.layers.Flatten()(model)
 
-    return conservation_output
+    return layer_out
 
 
-def build_2D_branch(sequence_input=None, classes=2, dim_1=50, dim_2=20):
+def build_2D_branch(sequence_input):
     """
     fun creates the network architecture 
     necessary for the training and 
@@ -58,14 +42,11 @@ def build_2D_branch(sequence_input=None, classes=2, dim_1=50, dim_2=20):
     defined and hard coded.
 
     parameters:
-    classes=number of classes
-    """
-    # model = keras.models.Sequential()
 
-    # array_shape = (dim_1, dim_2, 1)
+    """
 
     model = keras.layers.Conv2D(
-        filters=128, kernel_size=(6, 6), padding="same", data_format="channels_last"
+        filters=12, kernel_size=(6, 6), padding="same", data_format="channels_last"
     )(sequence_input)
 
     # model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
@@ -90,7 +71,7 @@ def build_2D_branch(sequence_input=None, classes=2, dim_1=50, dim_2=20):
     return model
 
 
-def build_multi_braches(classes=2, dim_1=50, dim_2=20):
+def build_multi_braches(dim_1=50, dim_2=20, dim_3=200):
     """
     create multi branches architecture
     """
@@ -98,14 +79,21 @@ def build_multi_braches(classes=2, dim_1=50, dim_2=20):
     sequence_outputs = []
     sequence_inputs = []
 
-    for i in range(0, 3):
+    tensor_input = keras.layers.Input(shape=(dim_1, dim_2, 1))
+    sequence_inputs.append(tensor_input)
+    sequence_outputs.append(build_2D_branch(tensor_input))
 
-        sequence_input = keras.layers.Input(shape=(dim_1, dim_2, 1))
-        sequence_outputs.append(
-            build_2D_branch(
-                sequence_input=sequence_input, classes=2, dim_1=50, dim_2=20
-            )
-        )
+    tensor_input = keras.layers.Input(shape=(dim_1, 4))
+    sequence_inputs.append(tensor_input)
+    sequence_outputs.append(build_1D_branch(tensor_input))
+
+    tensor_input = keras.layers.Input(shape=(dim_2, 4))
+    sequence_inputs.append(tensor_input)
+    sequence_outputs.append(build_1D_branch(tensor_input))
+
+    tensor_input = keras.layers.Input(shape=(dim_1, dim_3, 1))
+    sequence_inputs.append(tensor_input)
+    sequence_outputs.append(build_2D_branch(tensor_input))
 
     return sequence_inputs, sequence_outputs
 
@@ -115,22 +103,20 @@ def build_architecture(classes=2, dim_1=50, dim_2=20, branches=2):
     create single branch model with 2D dotmatrix.
     """
 
-    sequence_inputs, sequence_outputs = build_multi_braches(
-        classes=2, dim_1=50, dim_2=20
-    )
+    sequence_inputs, sequence_outputs = build_multi_braches(dim_1, dim_2)
 
-    model = keras.layers.concatenate(sequence_outputs)
+    concatenated = keras.layers.concatenate(sequence_outputs)
 
-    model.add(keras.layers.Dense(512))
-    model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
-    model.add(keras.layers.BatchNormalization())
-    model.add(keras.layers.Dropout(0.2))
+    model = keras.layers.Dense(512)(concatenated)
+    model = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(model)
+    model = keras.layers.BatchNormalization()(model)
+    model = keras.layers.Dropout(0.2)(model)
 
-    model.add(keras.layers.Dense(classes))
-    model.add(keras.layers.Softmax(axis=-1))
+    model = keras.layers.Dense(classes)(model)
+    model = keras.layers.Softmax(axis=-1)(model)
 
-    classification_model = Model(sequence_inputs, model)
-    return model
+    classification_model = keras.Model(sequence_inputs, model)
+    return classification_model
 
 
 def optimizer():
