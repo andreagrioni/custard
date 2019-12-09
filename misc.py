@@ -24,6 +24,8 @@ def load_options(json_filepath=None):
                 "dim_1": 200,
                 "dim_2": 20,
                 "dim_2b": 200,
+                "validation": True,
+                "val_dataset": "/home/angri/Desktop/project/custard/test/toy.tsv",
             },
             "evaluate": {
                 "model": "my_model.h5",

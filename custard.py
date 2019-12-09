@@ -30,12 +30,21 @@ def do_training(OPTIONS):
     dim_1 = train_opt["dim_1"]
     dim_2 = train_opt["dim_2"]
     # load dataset
-    dataset = data_gen(input_file, batch_size, dim_1, dim_2)
+    train_dataset = data_gen(input_file, batch_size, dim_1, dim_2)
+    val_dataset = None
+    if train_opt["validation"] == True:
+        val_file_path = train_opt["val_dataset"]
+        val_dataset = data_gen(val_file_path, batch_size, dim_1, dim_2)
+
     # generate network
     model = network.build_network(classes, dim_1, dim_2)
     # train network
     model = train.train_network(
-        model, dataset, batches_limit=batches_limit, iterations=iterations
+        model,
+        train_dataset,
+        val_dataset,
+        batches_limit=batches_limit,
+        iterations=iterations,
     )
     # save model
     network.save_model(model, os.getcwd())

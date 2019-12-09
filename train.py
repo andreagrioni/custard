@@ -7,6 +7,13 @@ import math
 import tempfile
 import misc
 
+
+import wandb
+from wandb.keras import WandbCallback
+
+wandb.init(project="custard")
+
+
 """
 train network
 """
@@ -105,13 +112,16 @@ def run_epochs(model, train_set, batch_size, iteration, batches_limit, tmp_path)
     return None
 
 
-def run_iterations(model, train_set, batch_size, iterations, batches_limit, tmp_name):
+def run_iterations(
+    model, train_set, val_dataset, batch_size, iterations, batches_limit, tmp_name
+):
     """
     fun controls iterative training
 
     paramenters:
     model=trainable network
     train_set=whole train set as array
+    val_set=user provided val dataset
     iteration=number of iterations
     batches_limit=train each iteration 
     on N batches.
@@ -128,20 +138,37 @@ def run_iterations(model, train_set, batch_size, iterations, batches_limit, tmp_
             batches_limit,
             sep="\t",
         )
-
-        run_epochs(
-            model=model,
-            train_set=train_set,
-            batch_size=batch_size,
-            iteration=iteration,
-            batches_limit=batches_limit,
-            tmp_path=tmp_name,
-        )
+        if val_dataset:
+            print("validation dataset provided by user")
+            model.fit(
+                train_set[0],
+                train_set[1],
+                batch_size=batch_size,
+                callbacks=[WandbCallback()],
+                validation_data=val_dataset,
+                use_multiprocessing=True,
+            )
+        else:
+            model.fit(
+                train_set[0],
+                train_set[1],
+                batch_size=batch_size,
+                callbacks=[WandbCallback()],
+                validation_split=0.2,
+                use_multiprocessing=True,
+            )
 
     return model
 
 
-def train_network(model, train_set, batch_size=32, batches_limit=None, iterations=None):
+def train_network(
+    model,
+    train_set,
+    val_dataset=None,
+    batch_size=32,
+    batches_limit=None,
+    iterations=None,
+):
     """
     fun train network on user 
     specified datasets
@@ -165,6 +192,7 @@ def train_network(model, train_set, batch_size=32, batches_limit=None, iteration
     model = run_iterations(
         model=model,
         train_set=train_set,
+        val_dataset=val_dataset,
         batch_size=batch_size,
         iterations=iterations,
         batches_limit=batches_limit,

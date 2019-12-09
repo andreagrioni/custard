@@ -170,24 +170,31 @@ def load_dataset(target_tsv, batch_size=32, dim_1=50, dim_2=20, scope="training"
     ohe_cons_2d_batches = np.split(df_ohe[3], batches_points)
     df_labels_batches = np.split(df_labels, batches_points)
 
-    mini_batches_set = list()
-    for number, batch in enumerate(
-        zip(
-            ohe_matrix_2d_batches,
-            ohe_matrix_1d_binds_batches,
-            ohe_matrix_1d_pirna_batches,
-            ohe_cons_2d_batches,
-            df_labels_batches,
-        )
-    ):
+    # test model.fit
+    mini_batches_list = (
+        df_ohe,
+        df_labels,
+    )
+    return mini_batches_list
 
-        dataset = batch
-        # if scope == "training":
-        #     dataset = split_train_val_set(batch)
-        # else:
-        #     dataset = batch
-        mini_batches_set.append(dataset)
-    return mini_batches_set
+    # mini_batches_set = list()
+    # for number, batch in enumerate(
+    #     zip(
+    #         ohe_matrix_2d_batches,
+    #         ohe_matrix_1d_binds_batches,
+    #         ohe_matrix_1d_pirna_batches,
+    #         ohe_cons_2d_batches,
+    #         df_labels_batches,
+    #     )
+    # ):
+
+    #     dataset = batch
+    #     # if scope == "training":
+    #     #     dataset = split_train_val_set(batch)
+    #     # else:
+    #     #     dataset = batch
+    #     mini_batches_set.append(dataset)
+    # return mini_batches_set
 
 
 if __name__ == "__main__":

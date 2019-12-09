@@ -2,6 +2,11 @@ import tensorflow as tf
 from tensorflow import keras
 import os
 
+# import wandb
+# from wandb.keras import WandbCallback
+
+# wandb.init(project="custard")
+
 """
 this module define and create the
 network model.
@@ -146,7 +151,12 @@ def train_on_batch_network(
 ):
 
     history = model.train_on_batch(
-        X_train, y_train, sample_weight=None, class_weight=None, reset_metrics=False
+        X_train,
+        y_train,
+        sample_weight=None,
+        class_weight=None,
+        reset_metrics=False,
+        callbacks=[WandbCallback()],
     )
 
     return history
