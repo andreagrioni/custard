@@ -8,10 +8,10 @@ import tempfile
 import misc
 
 
-import wandb
-from wandb.keras import WandbCallback
+# import wandb
+# from wandb.keras import WandbCallback
 
-wandb.init(project="custard")
+# wandb.init(project="custard")
 
 
 """
@@ -19,40 +19,29 @@ train network
 """
 
 
-# def network_callbacks(
-#     log_name,
-#     dest_path
-#     ):
-#     '''
-#     define callbacks funtions
-#     to run during network
-#     training
+def network_callbacks(log_name, dest_path):
+    """
+    define callbacks funtions
+    to run during network
+    training
 
-#     log_name=lof file name
-#     dest_path=file destination path
-#     '''
-#     log_path = os.path.join(
-#         dest_path,
-#         log_name
-#     )
+    log_name=lof file name
+    dest_path=file destination path
+    """
+    log_path = os.path.join(dest_path, log_name)
 
-#     Early_stop = keras.callbacks.EarlyStopping(
-#         monitor='val_accuracy',
-#         min_delta=0,
-#         patience=5,
-#         verbose=0,
-#         mode='auto',
-#         baseline=None,
-#         restore_best_weights=False
-#     )
+    Early_stop = keras.callbacks.EarlyStopping(
+        monitor="val_accuracy",
+        min_delta=0.1,
+        patience=5,
+        verbose=1,
+        mode="auto",
+        baseline=0.8,
+        restore_best_weights=False,
+    )
 
-# csv_logger = keras.callbacks.CSVLogger(
-#     log_path,
-#     separator="\t",
-#     append=False
-# )
-
-#    return [Early_stop]
+    csv_logger = keras.callbacks.CSVLogger(log_path, separator="\t", append=False)
+    return [csv_logger, Early_stop]
 
 
 def run_epochs(model, train_set, batch_size, iteration, batches_limit, tmp_path):
@@ -68,6 +57,7 @@ def run_epochs(model, train_set, batch_size, iteration, batches_limit, tmp_path)
     tmp_path=temporary directory
     """
     csv_log = os.path.join(tmp_path, f"{iteration}_train.csv")
+
     f = open(csv_log, "w")
     header = "\t".join(
         [
@@ -95,6 +85,7 @@ def run_epochs(model, train_set, batch_size, iteration, batches_limit, tmp_path)
 
         history = network.train_on_batch_network(model, X_train_ohe, y_train_ohe)
         print(history)
+
         # train_batch_history = history
 
         # if X_test_ohe:
@@ -138,18 +129,24 @@ def run_iterations(
             batches_limit,
             sep="\t",
         )
+        log_name = f"iter_{iteration}.h5"
+        dest_path = tmp_name
+        call_backs = network_callbacks(log_name, dest_path)
+
         if val_dataset:
             print("validation dataset provided by user")
-            model.fit(
+            history = model.fit(
                 train_set[0],
                 train_set[1],
                 batch_size=batch_size,
-                callbacks=[WandbCallback()],
+                # callbacks=[WandbCallback()],
+                callbacks=call_backs,
                 validation_data=val_dataset,
                 use_multiprocessing=True,
+                verbose=1,
             )
         else:
-            model.fit(
+            history = model.fit(
                 train_set[0],
                 train_set[1],
                 batch_size=batch_size,
@@ -157,6 +154,16 @@ def run_iterations(
                 validation_split=0.2,
                 use_multiprocessing=True,
             )
+
+        # log_csv = misc.print_history(
+        #     iteration=iteration,
+        #     batch=batch_size,
+        #     train_set_size=len(train_set[1]),
+        #     test_batch_size=len(val_dataset[1]),
+        #     history=history.history,
+        #     epoch_train=False,
+        # )
+        # print(log_csv)
 
     return model
 
