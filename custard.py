@@ -29,6 +29,8 @@ def do_training(OPTIONS):
     classes = train_opt["classes"]
     dim_1 = train_opt["dim_1"]
     dim_2 = train_opt["dim_2"]
+    dim_3 = train_opt["dim_3"]
+
     # load dataset
     train_dataset = data_gen(input_file, batch_size, dim_1, dim_2)
     val_dataset = None
@@ -37,7 +39,9 @@ def do_training(OPTIONS):
         val_dataset = data_gen(val_file_path, batch_size, dim_1, dim_2)
 
     # generate network
-    model = network.build_network(classes, dim_1, dim_2)
+    model = network.build_network(
+        classes=classes, shapes=(dim_1, dim_2, dim_3)
+        )
     # train network
     model = train.train_network(
         model,

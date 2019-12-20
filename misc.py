@@ -23,7 +23,7 @@ def load_options(json_filepath=None):
                 "classes": 2,
                 "dim_1": 200,
                 "dim_2": 20,
-                "dim_2b": 200,
+                "dim_3": 200,
                 "validation": True,
                 "val_dataset": "/home/angri/Desktop/project/custard/test/toy.tsv",
             },

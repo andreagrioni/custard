@@ -13,99 +13,78 @@ network model.
 """
 
 
-def build_network(classes=2, dim_1=50, dim_2=20):
+def build_network(classes=2, shapes=(50,20,200)):
     """
     fun is a pipeline of steps that 
     build a trainable network.
     """
-    model = build_architecture(classes, dim_1, dim_2)
+    dim_1, dim_2, dim_3 = *shapes
+    model = build_architecture(classes, dim_1, dim_2, dim_3)
 
     model = compile_network(model=model, optimizer=optimizer())
     return model
 
 
 def build_1D_branch(sequence_input):
+    """
+    this branch is a simple branch
+    of 1 Conv1D and MaxPooling2D.
 
-    model = keras.layers.Conv1D(
+    """
+    branch = keras.layers.Conv1D(
         filters=12, kernel_size=(6), padding="same", data_format="channels_last"
     )(sequence_input)
+    branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(branch)
+    branch = keras.layers.MaxPooling1D(pool_size=(2, 2))(branch)
+    branch = keras.layers.Flatten()(branch)
 
-    # x = Bidirectional(LSTM(16, return_sequences=True, activation='tanh', recurrent_activation='hard_sigmoid', dropout=tmp_dropout, recurrent_dropout=tmp_dropout))(x)
-    # x = Bidirectional(LSTM(8, return_sequences=True, activation='tanh', recurrent_activation='hard_sigmoid', dropout=tmp_dropout, recurrent_dropout=tmp_dropout))(x)
-    layer_out = keras.layers.Flatten()(model)
-
-    return layer_out
+    return branch
 
 
 def build_2D_branch(sequence_input):
     """
-    fun creates the network architecture 
-    necessary for the training and 
-    evaluation.
-
-    network architecture was empirical
-    defined and hard coded.
-
-    parameters:
+    this branch is a simple branch
+    of 1 Conv2D and MaxPooling2D.
 
     """
 
-    model = keras.layers.Conv2D(
+    branch = keras.layers.Conv2D(
         filters=12, kernel_size=(6, 6), padding="same", data_format="channels_last"
     )(sequence_input)
-
-    # model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
-    # model.add(keras.layers.BatchNormalization())
-    # model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    # model.add(keras.layers.Dropout(0.2))
-
-    # model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same",))
-    # model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
-    # model.add(keras.layers.BatchNormalization())
-    # model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    # model.add(keras.layers.Dropout(0.2))
-
-    # model.add(keras.layers.Conv2D(filters=128, kernel_size=(6, 6), padding="same"))
-    # model.add(keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0))
-    # model.add(keras.layers.BatchNormalization())
-    # model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    # model.add(keras.layers.Dropout(0.2))
-
-    # model.add(keras.layers.Flatten())
-    model = keras.layers.Flatten()(model)
-    return model
+    branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(branch)
+    branch = keras.layers.MaxPooling2D(pool_size=(2, 2))(branch)
+    branch = keras.layers.Flatten()(branch)
+    
+    return branch
 
 
 def build_multi_braches(dim_1=50, dim_2=20, dim_3=200):
     """
-    create multi branches architecture
+    use Keras Model API to build NN model
+    with 2 branches: 2D dot matrix (2D ConvNet)
+    and binding site conservation (1D ConvNet)
     """
 
+    # store NN inputs and outputs to lists
     sequence_outputs = []
     sequence_inputs = []
 
+    # define first branch 2D ConvNet
     tensor_input = keras.layers.Input(shape=(dim_1, dim_2, 1))
     sequence_inputs.append(tensor_input)
     sequence_outputs.append(build_2D_branch(tensor_input))
 
-    tensor_input = keras.layers.Input(shape=(dim_1, 4))
+    # define second branch 1D ConvNet
+    tensor_input = keras.layers.Input(shape=(dim_3, 1))
     sequence_inputs.append(tensor_input)
     sequence_outputs.append(build_1D_branch(tensor_input))
-
-    tensor_input = keras.layers.Input(shape=(dim_2, 4))
-    sequence_inputs.append(tensor_input)
-    sequence_outputs.append(build_1D_branch(tensor_input))
-
-    tensor_input = keras.layers.Input(shape=(dim_1, dim_3, 1))
-    sequence_inputs.append(tensor_input)
-    sequence_outputs.append(build_2D_branch(tensor_input))
 
     return sequence_inputs, sequence_outputs
 
 
-def build_architecture(classes=2, dim_1=50, dim_2=20, branches=2):
+def build_architecture(classes, dim_1, dim_2, dim_3):
     """
-    create single branch model with 2D dotmatrix.
+    function creates a NN of 2 branches (CNN)
     """
 
     sequence_inputs, sequence_outputs = build_multi_braches(dim_1, dim_2)
@@ -115,7 +94,7 @@ def build_architecture(classes=2, dim_1=50, dim_2=20, branches=2):
     model = keras.layers.Dense(512)(concatenated)
     model = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(model)
     model = keras.layers.BatchNormalization()(model)
-    model = keras.layers.Dropout(0.2)(model)
+    model = keras.layers.Dropout(0.5)(model)
 
     model = keras.layers.Dense(classes)(model)
     model = keras.layers.Softmax(axis=-1)(model)
