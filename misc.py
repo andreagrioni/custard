@@ -6,7 +6,7 @@ import json
 
 def load_options(json_filepath=None):
     if json_filepath:
-        with open(json_filepath, 'r') as fp:
+        with open(json_filepath, "r") as fp:
             OPTIONS = json.load(fp)
     else:
         OPTIONS = {
@@ -16,13 +16,16 @@ def load_options(json_filepath=None):
             "working_dir": "/home/angri/Desktop/project/custard_test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
-                "iterations": 10,
+                "iterations": 20,
                 "epochs": 10,
-                "batch_size": 32,
-                "batches_limit": 30,
+                "batch_size": 4,
+                "batches_limit": 10,
                 "classes": 2,
                 "dim_1": 200,
                 "dim_2": 20,
+                "dim_2b": 200,
+                "validation": True,
+                "val_dataset": "/home/angri/Desktop/project/custard/test/toy.tsv",
             },
             "evaluate": {
                 "model": "my_model.h5",
@@ -46,6 +49,11 @@ def create_log(OPTIONS):
     OPTIONS=tool arguments
     """
     input_paramenters_checkpoint(OPTIONS)
+    try:
+        os.makedirs(OPTIONS["working_dir"])
+    except FileExistsError:
+        pass
+
     os.chdir(OPTIONS["working_dir"])
     level = OPTIONS["log"]["level"]
     file_name = OPTIONS["log"]["name"]
@@ -133,22 +141,26 @@ def input_paramenters_checkpoint(OPTIONS):
 
 
 def print_history(
-    iteration,
-    batch,
-    train_set_size,
-    batch_limit,
-    train_batch_size,
-    test_batch_size,
-    train_batch_history,
-    test_batch_history,
+    iteration=None,
+    batch=None,
+    train_set_size=None,
+    batch_limit=None,
+    train_batch_size=None,
+    test_batch_size=None,
+    train_batch_history=None,
+    test_batch_history=None,
+    history=None,
+    epoch_train=True,
 ):
+    if epoch_train:
+        format_string = f"\titer\t{iteration}\tbatch\t{batch}|{train_set_size}\ttrain_size|{train_batch_size}\tloss|{train_batch_history[0]:.2E}\taccuracy|{train_batch_history[1]:.2f}\tval_size|{test_batch_size}\tloss|{test_batch_history[0]:.2E}\taccuracy|{test_batch_history[1]:.2f}"
 
-    format_string = f"\titer\t{iteration}\tbatch\t{batch}|{train_set_size}\ttrain_size|{train_batch_size}\tloss|{train_batch_history[0]:.2E}\taccuracy|{train_batch_history[1]:.2f}\tval_size|{test_batch_size}\tloss|{test_batch_history[0]:.2E}\taccuracy|{test_batch_history[1]:.2f}"
+        print(format_string)
+        logging.info(format_string)
 
-    print(format_string)
-    logging.info(format_string)
-
-    log_history = f"{iteration}\t{batch}\t{train_batch_size}\t{train_batch_history[0]}\t{train_batch_history[1]}\t{test_batch_size}\t{test_batch_history[0]}\t{test_batch_history[1]}"
+        log_history = f"{iteration}\t{batch}\t{train_batch_size}\t{train_batch_history[0]}\t{train_batch_history[1]}\t{test_batch_size}\t{test_batch_history[0]}\t{test_batch_history[1]}"
+    else:
+        log_history = f'\t{iteration}\t{batch}\t{train_set_size}\t{test_batch_size}\t{history["accuracy"]:.2f}\t{history["loss"]:.2E}\t{history["val_accuracy"]:.2f}\t{history["val_loss"]:.2E}'
 
     return log_history
 
