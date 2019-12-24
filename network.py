@@ -13,23 +13,13 @@ network model.
 """
 
 
-def build_network(classes=2, shapes=(50,20,200)):
-    """
-    fun is a pipeline of steps that 
-    build a trainable network.
-    """
-    dim_1, dim_2, dim_3 = *shapes
-    model = build_architecture(classes, dim_1, dim_2, dim_3)
-
-    model = compile_network(model=model, optimizer=optimizer())
-    return model
-
-
 def build_1D_branch(sequence_input):
     """
     this branch is a simple branch
     of 1 Conv1D and MaxPooling2D.
 
+    parameters:
+    sequence_input=tensor
     """
     branch = keras.layers.Conv1D(
         filters=12, kernel_size=(6), padding="same", data_format="channels_last"
@@ -46,6 +36,8 @@ def build_2D_branch(sequence_input):
     this branch is a simple branch
     of 1 Conv2D and MaxPooling2D.
 
+    parameters:
+    sequence_input=tensor
     """
 
     branch = keras.layers.Conv2D(
@@ -58,39 +50,53 @@ def build_2D_branch(sequence_input):
     return branch
 
 
-def build_multi_braches(dim_1=50, dim_2=20, dim_3=200):
+def build_multi_braches(shape):
     """
     use Keras Model API to build NN model
     with 2 branches: 2D dot matrix (2D ConvNet)
     and binding site conservation (1D ConvNet)
+
+    parameters:
+    shape=tensors shapes
     """
 
+    dim_1, dim_2, dim_3 = shape
+    
     # store NN inputs and outputs to lists
-    sequence_outputs = []
-    sequence_inputs = []
+    #sequence_outputs = []
+    #sequence_inputs = []
 
-    # define first branch 2D ConvNet
-    tensor_input = keras.layers.Input(shape=(dim_1, dim_2, 1))
-    sequence_inputs.append(tensor_input)
-    sequence_outputs.append(build_2D_branch(tensor_input))
+    # define conv_net 2d between binding sites and miRNA
+    ## declare input tensor
+    tensor_input = keras.layers.Input(shape=(dim_1, dim_2, 2))
+    ## define 2D conv_net input
+    conv_net_2d = build_2D_branch(tensor_input)
+    ## append to model inputs and outputs
+    #sequence_inputs.append(tensor_input)
+    #sequence_outputs.append(conv_net_2d)
 
-    # define second branch 1D ConvNet
-    tensor_input = keras.layers.Input(shape=(dim_3, 1))
-    sequence_inputs.append(tensor_input)
-    sequence_outputs.append(build_1D_branch(tensor_input))
+    # define conv_net 1D of binding sites conservations
+    ## declare tensor
+#    tensor_input = keras.layers.Input(shape=(dim_3, 1))
+    ## define 1D conv_net input
+#    conv_net_1d = build_1D_branch(tensor_input)
+    ## append to model inputs and outputs
+#    sequence_inputs.append(tensor_input)
+#    sequence_outputs.append(conv_net_1d)
 
-    return sequence_inputs, sequence_outputs
+    return tensor_input, conv_net_2d
 
 
-def build_architecture(classes, dim_1, dim_2, dim_3):
+def add_ann(concatenated, classes):
     """
-    function creates a NN of 2 branches (CNN)
+    build the ANN layers for the final
+    input classification
+
+    paramenters:
+    concatenated=concatenations of previuous layers
+    classes=number of predicted classes
     """
-
-    sequence_inputs, sequence_outputs = build_multi_braches(dim_1, dim_2)
-
-    concatenated = keras.layers.concatenate(sequence_outputs)
-
+    # build ANN model layers
     model = keras.layers.Dense(512)(concatenated)
     model = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(model)
     model = keras.layers.BatchNormalization()(model)
@@ -99,8 +105,7 @@ def build_architecture(classes, dim_1, dim_2, dim_3):
     model = keras.layers.Dense(classes)(model)
     model = keras.layers.Softmax(axis=-1)(model)
 
-    classification_model = keras.Model(sequence_inputs, model)
-    return classification_model
+    return model    
 
 
 def optimizer():
@@ -124,44 +129,28 @@ def compile_network(model, optimizer):
     )
     return model
 
-
-def train_on_batch_network(
-    model, X_train, y_train,
-):
-
-    history = model.train_on_batch(
-        X_train,
-        y_train,
-        sample_weight=None,
-        class_weight=None,
-        reset_metrics=False,
-        callbacks=[WandbCallback()],
-    )
-
-    return history
-
-
-def predict_on_batch_network(model, X_test):
+def build_network(classes, shape):
     """
-    fun predict on input minibatch
-
-    paramenters:
-    model=input model
-    X_test=db to predict
+    function creates a NN of 2 branches (CNN)
     """
-    predictions = model.predict_on_batch(X_test)
-    return predictions
+
+    # generate CNN branches
+    sequence_inputs, sequence_outputs = build_multi_braches(shape)
+
+    # concatenate branches
+#    concatenated = keras.layers.concatenate(sequence_outputs)
+
+    # build ANN model layers
+    model_architecture = add_ann(sequence_outputs, classes)
+    
+    # merge model
+    classification_model = keras.Model(sequence_inputs, model_architecture)
 
 
-def test_on_batch_network(
-    model, X_test, y_test,
-):
-
-    history = model.test_on_batch(
-        X_test, y_test, sample_weight=None, reset_metrics=False
-    )
-
-    return history
+    # compile model to trainable
+    model = compile_network(model=classification_model, optimizer=optimizer())
+    
+    return model
 
 
 def load_model_network(model_file_path):

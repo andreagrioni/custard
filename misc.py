@@ -12,20 +12,19 @@ def load_options(json_filepath=None):
         OPTIONS = {
             "flags": {"train": True, "evaluate": False, "predict": False},
             "threshold": 0.5,
-            "input_file": "/home/angri/Desktop/project/custard/test/test.tsv",
+            "input_file": "/home/angri/Desktop/projects/custard/test/test.tsv",
             "working_dir": "/home/angri/Desktop/project/custard_test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
                 "iterations": 20,
                 "epochs": 10,
                 "batch_size": 4,
-                "batches_limit": 10,
                 "classes": 2,
                 "dim_1": 200,
                 "dim_2": 20,
                 "dim_3": 200,
                 "validation": True,
-                "val_dataset": "/home/angri/Desktop/project/custard/test/toy.tsv",
+                "val_dataset": "/home/angri/Desktop/projects/custard/test/toy.tsv",
             },
             "evaluate": {
                 "model": "my_model.h5",
@@ -119,25 +118,25 @@ def input_paramenters_checkpoint(OPTIONS):
         raise FileNotFoundError(OPTIONS["input_file"])
         raise SystemExit
 
-    if OPTIONS["evaluate"]["model_dir"] and OPTIONS["evaluate"]["model"]:
-        model_path = os.path.join(
-            OPTIONS["evaluate"]["model_dir"], OPTIONS["evaluate"]["model"]
-        )
-        if not os.path.exists(OPTIONS["evaluate"]["model_dir"]):
-            logging.error(
-                f'model dir does not exit: {OPTIONS["evaluate"]["model_dir"]}'
-            )
-            raise FileNotFoundError(OPTIONS["evaluate"]["model_dir"])
-            raise SystemExit
+    # if OPTIONS["evaluate"]["model_dir"] and OPTIONS["evaluate"]["model"]:
+    #     model_path = os.path.join(
+    #         OPTIONS["evaluate"]["model_dir"], OPTIONS["evaluate"]["model"]
+    #     )
+    #     if not os.path.exists(OPTIONS["evaluate"]["model_dir"]):
+    #         logging.error(
+    #             f'model dir does not exit: {OPTIONS["evaluate"]["model_dir"]}'
+    #         )
+    #         raise FileNotFoundError(OPTIONS["evaluate"]["model_dir"])
+    #         raise SystemExit
 
-        if not os.path.exists(model_path) and not OPTIONS["flags"]["train"]:
-            logging.error(f"model file does not exit: {model_path}")
-            raise FileNotFoundError(model_path)
-            raise SystemExit
-    if not os.path.exists(OPTIONS["working_dir"]):
-        os.makedirs(OPTIONS["working_dir"])
-        logging.info(f'create wd: {OPTIONS["working_dir"]}')
-    return None
+    #     if not os.path.exists(model_path) and not OPTIONS["flags"]["train"]:
+    #         logging.error(f"model file does not exit: {model_path}")
+    #         raise FileNotFoundError(model_path)
+    #         raise SystemExit
+    # if not os.path.exists(OPTIONS["working_dir"]):
+    #     os.makedirs(OPTIONS["working_dir"])
+    #     logging.info(f'create wd: {OPTIONS["working_dir"]}')
+    # return None
 
 
 def print_history(
