@@ -4,30 +4,30 @@ import os
 import json
 
 
-def load_options(json_filepath=None):
-    if json_filepath:
-        with open(json_filepath, 'r') as fp:
+def load_options():
+    try:
+        with open(sys.argv[1], "r") as fp:
             OPTIONS = json.load(fp)
-    else:
+    except:
         OPTIONS = {
             "flags": {"train": True, "evaluate": False, "predict": False},
             "threshold": 0.5,
-            "input_file": "/home/angri/Desktop/project/custard/test/test.tsv",
-            "working_dir": "/home/angri/Desktop/project/custard_test/",
+            #"input_file": "/home/angri/Desktop/projects/custard/test/test.tsv",
+            "input_file": "toy/toy_train.tsv",
+            "working_dir": "toy/test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
-                "iterations": 10,
-                "epochs": 10,
-                "batch_size": 32,
-                "batches_limit": 30,
+                "epochs": 15,
+                "batch_size": 8,
                 "classes": 2,
-                "dim_1": 200,
-                "dim_2": 20,
+                "tensor_dim": (200,20),
+                "validation": True,
+                "val_dataset": "toy/toy_val.tsv",
             },
             "evaluate": {
                 "model": "my_model.h5",
-                "model_dir": "/home/angri/Desktop/project/custard_test/",
-                "batch_size": 32,
+                "model_dir": "toy/test/",
+                "batch_size": 8,
                 "metrics_filename": "test",
             },
         }
@@ -46,7 +46,7 @@ def create_log(OPTIONS):
     OPTIONS=tool arguments
     """
     input_paramenters_checkpoint(OPTIONS)
-    os.chdir(OPTIONS["working_dir"])
+    
     level = OPTIONS["log"]["level"]
     file_name = OPTIONS["log"]["name"]
     # FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
@@ -56,7 +56,6 @@ def create_log(OPTIONS):
         level=logging.DEBUG,
         filename=file_name,
     )
-    logging.info(f'change wd at: {OPTIONS["working_dir"]}')
     return None
 
 
@@ -94,9 +93,18 @@ def load_dataset_checkpoint(number, batch_shape, batch_ohe):
     logging.info(
         f"batch\t{number}\tbatch_shape\t{batch_shape}\ttrain-ohe\t{batch_ohe[0].shape}\tlabel-ohe\t{batch_ohe[1].shape}"
     )
-
     return None
 
+
+def create_wd(OPTIONS):
+    try:
+        os.makedirs(OPTIONS["working_dir"])
+    except FileExistsError:
+        pass
+
+    os.chdir(OPTIONS["working_dir"])
+    logging.info(f'change wd at: {OPTIONS["working_dir"]}')
+    return None
 
 def input_paramenters_checkpoint(OPTIONS):
     """
@@ -110,45 +118,30 @@ def input_paramenters_checkpoint(OPTIONS):
         logging.error(f'input file does not exit: {OPTIONS["input_file"]}')
         raise FileNotFoundError(OPTIONS["input_file"])
         raise SystemExit
-
-    if OPTIONS["evaluate"]["model_dir"] and OPTIONS["evaluate"]["model"]:
-        model_path = os.path.join(
-            OPTIONS["evaluate"]["model_dir"], OPTIONS["evaluate"]["model"]
-        )
-        if not os.path.exists(OPTIONS["evaluate"]["model_dir"]):
-            logging.error(
-                f'model dir does not exit: {OPTIONS["evaluate"]["model_dir"]}'
-            )
-            raise FileNotFoundError(OPTIONS["evaluate"]["model_dir"])
-            raise SystemExit
-
-        if not os.path.exists(model_path) and not OPTIONS["flags"]["train"]:
-            logging.error(f"model file does not exit: {model_path}")
-            raise FileNotFoundError(model_path)
-            raise SystemExit
-    if not os.path.exists(OPTIONS["working_dir"]):
-        os.makedirs(OPTIONS["working_dir"])
-        logging.info(f'create wd: {OPTIONS["working_dir"]}')
     return None
 
 
 def print_history(
-    iteration,
-    batch,
-    train_set_size,
-    batch_limit,
-    train_batch_size,
-    test_batch_size,
-    train_batch_history,
-    test_batch_history,
+    iteration=None,
+    batch=None,
+    train_set_size=None,
+    batch_limit=None,
+    train_batch_size=None,
+    test_batch_size=None,
+    train_batch_history=None,
+    test_batch_history=None,
+    history=None,
+    epoch_train=True,
 ):
+    if epoch_train:
+        format_string = f"\titer\t{iteration}\tbatch\t{batch}|{train_set_size}\ttrain_size|{train_batch_size}\tloss|{train_batch_history[0]:.2E}\taccuracy|{train_batch_history[1]:.2f}\tval_size|{test_batch_size}\tloss|{test_batch_history[0]:.2E}\taccuracy|{test_batch_history[1]:.2f}"
 
-    format_string = f"\titer\t{iteration}\tbatch\t{batch}|{train_set_size}\ttrain_size|{train_batch_size}\tloss|{train_batch_history[0]:.2E}\taccuracy|{train_batch_history[1]:.2f}\tval_size|{test_batch_size}\tloss|{test_batch_history[0]:.2E}\taccuracy|{test_batch_history[1]:.2f}"
+        print(format_string)
+        logging.info(format_string)
 
-    print(format_string)
-    logging.info(format_string)
-
-    log_history = f"{iteration}\t{batch}\t{train_batch_size}\t{train_batch_history[0]}\t{train_batch_history[1]}\t{test_batch_size}\t{test_batch_history[0]}\t{test_batch_history[1]}"
+        log_history = f"{iteration}\t{batch}\t{train_batch_size}\t{train_batch_history[0]}\t{train_batch_history[1]}\t{test_batch_size}\t{test_batch_history[0]}\t{test_batch_history[1]}"
+    else:
+        log_history = f'\t{iteration}\t{batch}\t{train_set_size}\t{test_batch_size}\t{history["accuracy"]:.2f}\t{history["loss"]:.2E}\t{history["val_accuracy"]:.2f}\t{history["val_loss"]:.2E}'
 
     return log_history
 

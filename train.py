@@ -7,200 +7,105 @@ import math
 import tempfile
 import misc
 
-'''
+# not able to install wandb
+# import wandb
+# from wandb.keras import WandbCallback
+
+# wandb.init(project="custard")
+
+
+"""
 train network
-'''
+"""
 
 
-# def network_callbacks(
-#     log_name,
-#     dest_path
-#     ):
-#     '''
-#     define callbacks funtions
-#     to run during network
-#     training
+def network_callbacks(log_name, dest_path):
+    """
+    define callbacks funtions
+    to run during network
+    training
 
-#     log_name=lof file name
-#     dest_path=file destination path
-#     '''
-#     log_path = os.path.join(
-#         dest_path,
-#         log_name
-#     )
+    log_name=lof file name
+    dest_path=file destination path
+    """
+    log_path = os.path.join(dest_path, log_name)
 
-#     Early_stop = keras.callbacks.EarlyStopping(
-#         monitor='val_accuracy',
-#         min_delta=0,
-#         patience=5,
-#         verbose=0,
-#         mode='auto',
-#         baseline=None,
-#         restore_best_weights=False
-#     )
-
-    # csv_logger = keras.callbacks.CSVLogger(
-    #     log_path,
-    #     separator="\t",
-    #     append=False
-    # )
-
-#    return [Early_stop]
-
-
-def run_epochs(
-    model,
-    train_set,
-    batch_size,
-    iteration,
-    batches_limit,
-    tmp_path
-    ):
-    '''
-    fun controls one cycle training
-    
-    paramenters:
-    model=trainable network
-    training_set=train set as ohe array
-    batc_size=samples per minibatches
-    iteration=iteration number
-    batches_limit=limit train to N batches
-    tmp_path=temporary directory
-    '''
-    csv_log = os.path.join(
-        tmp_path, f"{iteration}_train.csv"
+    Early_stop = keras.callbacks.EarlyStopping(
+        monitor="loss",
+        min_delta=0.1,
+        patience=5,
+        verbose=1,
+        mode="auto",
+        baseline=0.8,
+        restore_best_weights=False,
     )
-    f = open(csv_log, 'w')
-    header = '\t'.join([
-        "iteration",
-        "batch",
-        "train_batch_size",
-        "train_loss",
-        "train_acc",
-        "val_batch_size",
-        "val_loss",
-        "val_acc"
-        ])
-    f.write(header + "\n")
-    
-    for batch, batch_data in enumerate(
-        train_set, start=1
-        ):
 
-        X_train_ohe, X_test_ohe, y_train_dummies, y_test_dummies = batch_data
-
-        history = network.train_on_batch_network(
-            model,
-            X_train_ohe,
-            y_train_dummies,
-        )
-
-        train_batch_history = history
-
-        history = network.test_on_batch_network(
-            model,
-            X_test_ohe,
-            y_test_dummies,
-        )
-
-        test_batch_history = history
-        
-        log_csv = misc.print_history(
-            iteration,
-            batch,
-            len(train_set),
-            batches_limit,
-            X_train_ohe.shape[0],
-            X_test_ohe.shape[0],
-            train_batch_history,
-            test_batch_history
-        )
-        f.write(log_csv + '\n')
-
-        if batch >= batches_limit:
-            break
-    f.close()
-    return None
-
-
-def run_iterations(
-    model,
-    train_set,
-    batch_size,
-    iterations,
-    batches_limit,
-    tmp_name
-    ):
-    '''
-    fun controls iterative training
-
-    paramenters:
-    model=trainable network
-    train_set=whole train set as array
-    iteration=number of iterations
-    batches_limit=train each iteration 
-    on N batches.
-    '''
-
-    for iteration in range(
-        0, iterations + 1
-    ):
-        print()
-        print("iteration:",
-        iteration, "of total:",
-        iterations, "batches_limit",batches_limit, sep="\t")
-
-        run_epochs(
-            model=model,
-            train_set=train_set,
-            batch_size=batch_size,
-            iteration=iteration,
-            batches_limit=batches_limit,
-            tmp_path=tmp_name,
-        )
-
-    return model
+    csv_logger = keras.callbacks.CSVLogger(log_path, separator="\t", append=False)
+    return [csv_logger, Early_stop]
 
 
 def train_network(
     model,
     train_set,
-    batch_size=32,
-    batches_limit=None,
-    iterations=None
+    val_dataset,
+    batch_size,
     ):
-    '''
+    """
     fun train network on user 
     specified datasets
 
-    paramenters:
+    parameters:
     model=trainable network
-    train_set=ImageBatchGenerator
+    train_set=X,y train tuple
     batch_size=batch size
-    batches_limit=define a max number 
-    of batches to use for training
-    iterations=max number of iterations
-    '''
-    tmpdirname="train_tmp"
-    os.makedirs(
-        tmpdirname, exist_ok=True)
+    """
+    
+    tmpdirname = "train_tmp"
+    os.makedirs(tmpdirname, exist_ok=True)
 
-    if not iterations:
-        iterations = math.ceil(
-            len(train_set)/batch_size
-        )
-    if not batches_limit:
-        batches_limit = len(train_set)
-    # RUN ITERATIONS MODULE
-    model = run_iterations(
-            model=model,
-            train_set=train_set,
-            batch_size=batch_size,
-            iterations=iterations,
-            batches_limit=batches_limit,
-            tmp_name=tmpdirname
+    X_train, y_train = train_set
+
+    print("validation dataset provided by user")
+    history = model.fit(
+        X_train,
+        y_train,
+        batch_size=batch_size,
+        epochs=10,
+        callbacks=network_callbacks('test.log', tmpdirname),
+#        callbacks=[WandbCallback()],
+        validation_data=val_dataset,
+        use_multiprocessing=True,
+        verbose=1,
     )
     return model
+
+
+def do_training(OPTIONS, dataset, tensor_dim):
+    train_opt = OPTIONS["train"]
+    # train settings
+    batch_size = train_opt["batch_size"]
+    classes = train_opt["classes"]
+    
+    misc.create_wd(OPTIONS)
+
+    # generate network
+    model = network.build_network(
+        classes=classes, shape=tensor_dim
+        )
+    # train network
+    train_dataset = (dataset[0], dataset[1])
+    val_dataset = (dataset[2], dataset[3])
+    
+    model = train_network(
+        model,
+        train_dataset,
+        val_dataset,
+        batch_size=batch_size
+    )
+    # save model
+    network.save_model(model, os.getcwd())
+    return model
+
 
 if __name__ == "__main__":
     pass
