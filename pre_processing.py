@@ -36,14 +36,14 @@ def one_hot_encoding(df, tensor_dim):
     tensor_dim=tensors shapes
     """
 
-    dim_1, dim_2 = tensor_dim
+    dim_1, dim_2, channel = tensor_dim
 
     samples = df.shape[0]
     # matrix of 4D with samples, nucleotide
     # binding length, miRNA length,
     # channels (dot matrix and conservation)
-    shape_matrix_2d = (samples, dim_1, dim_2, 2)
-    
+    shape_matrix_2d = (samples, dim_1, dim_2, channel)
+
     x_sequence = df.iloc[:, 0].values.tolist()
     y_sequence = df.iloc[:, 1].values.tolist()
     z_cons = df.iloc[:, 2].values.tolist()
@@ -56,14 +56,10 @@ def one_hot_encoding(df, tensor_dim):
             x_seq_nt = x_sequence[sample][x_seq_pos]
             for y_seq_pos in range(0, dim_2):
                 y_seq_nt = y_sequence[sample][y_seq_pos]
-                ohe_matrix_2d[
-                    sample, x_seq_pos, y_seq_pos, 0
-                    ] = watson_crick(
-                        x_seq_nt, y_seq_nt
-                    )
-                ohe_matrix_2d[
-                    sample, x_seq_pos, y_seq_pos, 1
-                    ] = z_cons_list[x_seq_pos]
+                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
+                    x_seq_nt, y_seq_nt
+                )
+                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 1] = z_cons_list[x_seq_pos]
 
     return ohe_matrix_2d
 
@@ -87,37 +83,33 @@ def make_sets_ohe(dataset, tensor_dim):
     return [X_train, y_train]
 
 
-def load_dataset(
-    train_tsv, validation_tsv, tensor_dim, scope='train'
-    ):
+def load_dataset(dataset, tensor_dim, scope="train"):
     """
     fun loads connection table as pandas df,
     and return a list containing minibatches
     of connections as ohe (features) and labels.
 
     parameters:
-    train_tsv=custard train samples
-    validation_tsv=custard validation samples
+    dataset=tuple of train,validation or test set
     tensor_dim=tensor dimensions
     scope=model stage (train, validation, pred)
     """
-    
-    target_files = [train_tsv, validation_tsv]
+
     datasets = []
 
-    for target_tsv in target_files:
-        try:
-            df = (
-                pd.read_csv(target_tsv, sep="\t", names=["x", "y", "z", "label"])
-                .sample(frac=1)
-                .reset_index(drop=True)
-            )
-        except Exception as e:
-            logging.error("Exception occured", exc_info=True)
-            raise SystemExit("Failed to load dataset as pandas DataFrame")
-        data_ohe = make_sets_ohe(df, tensor_dim)
-        datasets += data_ohe
-
+    for target_tsv in dataset:
+        if target_tsv:
+            try:
+                df = (
+                    pd.read_csv(target_tsv, sep="\t", names=["x", "y", "z", "label"])
+                    .sample(frac=1)
+                    .reset_index(drop=True)
+                )
+            except Exception as e:
+                logging.error("Exception occured", exc_info=True)
+                raise SystemExit("Failed to load dataset as pandas DataFrame")
+            data_ohe = make_sets_ohe(df, tensor_dim)
+            datasets += data_ohe
     return datasets
 
 

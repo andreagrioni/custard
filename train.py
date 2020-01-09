@@ -45,11 +45,8 @@ def network_callbacks(log_name, dest_path):
 
 
 def train_network(
-    model,
-    train_set,
-    val_dataset,
-    batch_size,
-    ):
+    model, train_set, val_dataset, batch_size,
+):
     """
     fun train network on user 
     specified datasets
@@ -59,7 +56,7 @@ def train_network(
     train_set=X,y train tuple
     batch_size=batch size
     """
-    
+
     tmpdirname = "train_tmp"
     os.makedirs(tmpdirname, exist_ok=True)
 
@@ -71,8 +68,8 @@ def train_network(
         y_train,
         batch_size=batch_size,
         epochs=10,
-        callbacks=network_callbacks('test.log', tmpdirname),
-#        callbacks=[WandbCallback()],
+        callbacks=network_callbacks("test.log", tmpdirname),
+        #        callbacks=[WandbCallback()],
         validation_data=val_dataset,
         use_multiprocessing=True,
         verbose=1,
@@ -80,30 +77,30 @@ def train_network(
     return model
 
 
+def create_wd(OPTIONS):
+    try:
+        os.makedirs(OPTIONS["train"]["working_dir"])
+    except FileExistsError:
+        pass
+
+
 def do_training(OPTIONS, dataset, tensor_dim):
+    # creates wd
+    create_wd(OPTIONS)
+
     train_opt = OPTIONS["train"]
     # train settings
     batch_size = train_opt["batch_size"]
     classes = train_opt["classes"]
-    
-    misc.create_wd(OPTIONS)
-
     # generate network
-    model = network.build_network(
-        classes=classes, shape=tensor_dim
-        )
+    model = network.build_network(classes=classes, shape=tensor_dim)
     # train network
     train_dataset = (dataset[0], dataset[1])
     val_dataset = (dataset[2], dataset[3])
-    
-    model = train_network(
-        model,
-        train_dataset,
-        val_dataset,
-        batch_size=batch_size
-    )
+
+    model = train_network(model, train_dataset, val_dataset, batch_size=batch_size)
     # save model
-    network.save_model(model, os.getcwd())
+    network.save_model(model, OPTIONS["train"]["working_dir"])
     return model
 
 

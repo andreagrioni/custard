@@ -10,25 +10,25 @@ def load_options():
             OPTIONS = json.load(fp)
     except:
         OPTIONS = {
-            "flags": {"train": True, "evaluate": False, "predict": False},
-            "threshold": 0.5,
-            #"input_file": "/home/angri/Desktop/projects/custard/test/test.tsv",
-            "input_file": "toy/toy_train.tsv",
-            "working_dir": "toy/test/",
+            "flags": {"train": True, "evaluate": True, "predict": False},
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
+                "tensor_dim": (200, 20, 2),
                 "epochs": 15,
                 "batch_size": 8,
                 "classes": 2,
-                "tensor_dim": (200,20),
                 "validation": True,
-                "val_dataset": "toy/toy_val.tsv",
+                "input_file": ("toy/toy_train.tsv", "toy/toy_val.tsv"),
+                "working_dir": "test/",
             },
             "evaluate": {
+                "input_file": ("toy/toy_test.tsv", None),
                 "model": "my_model.h5",
-                "model_dir": "toy/test/",
+                "model_dir": "test/",
                 "batch_size": 8,
-                "metrics_filename": "test",
+                "tensor_dim": (200, 20, 2),
+                "metrics_filename": "eval_metrics",
+                "threshold": 0.5,
             },
         }
 
@@ -45,8 +45,8 @@ def create_log(OPTIONS):
     paramenters:
     OPTIONS=tool arguments
     """
-    input_paramenters_checkpoint(OPTIONS)
-    
+    # input_paramenters_checkpoint(OPTIONS)
+
     level = OPTIONS["log"]["level"]
     file_name = OPTIONS["log"]["name"]
     # FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
@@ -95,16 +95,6 @@ def load_dataset_checkpoint(number, batch_shape, batch_ohe):
     )
     return None
 
-
-def create_wd(OPTIONS):
-    try:
-        os.makedirs(OPTIONS["working_dir"])
-    except FileExistsError:
-        pass
-
-    os.chdir(OPTIONS["working_dir"])
-    logging.info(f'change wd at: {OPTIONS["working_dir"]}')
-    return None
 
 def input_paramenters_checkpoint(OPTIONS):
     """

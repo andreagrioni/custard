@@ -24,7 +24,9 @@ def build_1D_branch(sequence_input):
     branch = keras.layers.Conv1D(
         filters=12, kernel_size=(6), padding="same", data_format="channels_last"
     )(sequence_input)
-    branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(branch)
+    branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(
+        branch
+    )
     branch = keras.layers.MaxPooling1D(pool_size=(2, 2))(branch)
     branch = keras.layers.Flatten()(branch)
 
@@ -43,10 +45,12 @@ def build_2D_branch(sequence_input):
     branch = keras.layers.Conv2D(
         filters=12, kernel_size=(6, 6), padding="same", data_format="channels_last"
     )(sequence_input)
-    branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(branch)
+    branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(
+        branch
+    )
     branch = keras.layers.MaxPooling2D(pool_size=(2, 2))(branch)
     branch = keras.layers.Flatten()(branch)
-    
+
     return branch
 
 
@@ -79,7 +83,7 @@ def add_ann(concatenated, classes):
     classes=number of predicted classes
     """
     # build ANN model layers
-    model = keras.layers.Dense(512)(concatenated)
+    model = keras.layers.Dense(128)(concatenated)
     model = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(model)
     model = keras.layers.BatchNormalization()(model)
     model = keras.layers.Dropout(0.5)(model)
@@ -87,7 +91,7 @@ def add_ann(concatenated, classes):
     model = keras.layers.Dense(classes)(model)
     model = keras.layers.Softmax(axis=-1)(model)
 
-    return model    
+    return model
 
 
 def optimizer():
@@ -111,6 +115,7 @@ def compile_network(model, optimizer):
     )
     return model
 
+
 def build_network(classes, shape):
     """
     function creates a NN of 2 branches (CNN)
@@ -120,30 +125,29 @@ def build_network(classes, shape):
     sequence_inputs, sequence_outputs = build_multi_braches(shape)
 
     # concatenate branches
-#    concatenated = keras.layers.concatenate(sequence_outputs)
+    #    concatenated = keras.layers.concatenate(sequence_outputs)
 
     # build ANN model layers
     model_architecture = add_ann(sequence_outputs, classes)
-    
+
     # merge model
     classification_model = keras.Model(sequence_inputs, model_architecture)
 
-
     # compile model to trainable
     model = compile_network(model=classification_model, optimizer=optimizer())
-    
+
     return model
 
 
-def load_model_network(model_file_path):
+def load_model_network(model_name, model_dir):
     """
     load h5 model.
     
     paramenters:
-    path=dir path of model
-    name=model file name
+    model_name=model file name
+    model_dir=model dir path
     """
-    print(model_file_path)
+    model_file_path = os.path.join(model_dir, model_name)
     model = keras.models.load_model(model_file_path)
     return model
 
@@ -153,6 +157,18 @@ def save_model(model, path, name="my_model.h5"):
     model.save(model_file_path)
     del model
     return model_file_path
+
+
+def model_predict(model, dataset):
+    """
+    model prediction on target dataset
+
+    paramenters:
+    model=keras model
+    dataset=dataset with no labels
+    """
+    prediction_array = model.predict(dataset)
+    return prediction_array
 
 
 if __name__ == "__main__":
