@@ -60,29 +60,11 @@ def build_multi_braches(shape):
     shape=tensors shapes
     """
 
-    dim_1, dim_2, dim_3 = shape
-    
-    # store NN inputs and outputs to lists
-    #sequence_outputs = []
-    #sequence_inputs = []
-
     # define conv_net 2d between binding sites and miRNA
     ## declare input tensor
-    tensor_input = keras.layers.Input(shape=(dim_1, dim_2, 2))
+    tensor_input = keras.layers.Input(shape=(shape[0], shape[1], 2))
     ## define 2D conv_net input
     conv_net_2d = build_2D_branch(tensor_input)
-    ## append to model inputs and outputs
-    #sequence_inputs.append(tensor_input)
-    #sequence_outputs.append(conv_net_2d)
-
-    # define conv_net 1D of binding sites conservations
-    ## declare tensor
-#    tensor_input = keras.layers.Input(shape=(dim_3, 1))
-    ## define 1D conv_net input
-#    conv_net_1d = build_1D_branch(tensor_input)
-    ## append to model inputs and outputs
-#    sequence_inputs.append(tensor_input)
-#    sequence_outputs.append(conv_net_1d)
 
     return tensor_input, conv_net_2d
 

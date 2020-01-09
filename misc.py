@@ -4,32 +4,30 @@ import os
 import json
 
 
-def load_options(json_filepath=None):
-    if json_filepath:
-        with open(json_filepath, "r") as fp:
+def load_options():
+    try:
+        with open(sys.argv[1], "r") as fp:
             OPTIONS = json.load(fp)
-    else:
+    except:
         OPTIONS = {
             "flags": {"train": True, "evaluate": False, "predict": False},
             "threshold": 0.5,
-            "input_file": "/home/angri/Desktop/projects/custard/test/test.tsv",
-            "working_dir": "/home/angri/Desktop/project/custard_test/",
+            #"input_file": "/home/angri/Desktop/projects/custard/test/test.tsv",
+            "input_file": "toy/toy_train.tsv",
+            "working_dir": "toy/test/",
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
-                "iterations": 20,
-                "epochs": 10,
-                "batch_size": 4,
+                "epochs": 15,
+                "batch_size": 8,
                 "classes": 2,
-                "dim_1": 200,
-                "dim_2": 20,
-                "dim_3": 200,
+                "tensor_dim": (200,20),
                 "validation": True,
-                "val_dataset": "/home/angri/Desktop/projects/custard/test/toy.tsv",
+                "val_dataset": "toy/toy_val.tsv",
             },
             "evaluate": {
                 "model": "my_model.h5",
-                "model_dir": "/home/angri/Desktop/project/custard_test/",
-                "batch_size": 32,
+                "model_dir": "toy/test/",
+                "batch_size": 8,
                 "metrics_filename": "test",
             },
         }
@@ -48,12 +46,7 @@ def create_log(OPTIONS):
     OPTIONS=tool arguments
     """
     input_paramenters_checkpoint(OPTIONS)
-    try:
-        os.makedirs(OPTIONS["working_dir"])
-    except FileExistsError:
-        pass
-
-    os.chdir(OPTIONS["working_dir"])
+    
     level = OPTIONS["log"]["level"]
     file_name = OPTIONS["log"]["name"]
     # FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
@@ -63,7 +56,6 @@ def create_log(OPTIONS):
         level=logging.DEBUG,
         filename=file_name,
     )
-    logging.info(f'change wd at: {OPTIONS["working_dir"]}')
     return None
 
 
@@ -101,9 +93,18 @@ def load_dataset_checkpoint(number, batch_shape, batch_ohe):
     logging.info(
         f"batch\t{number}\tbatch_shape\t{batch_shape}\ttrain-ohe\t{batch_ohe[0].shape}\tlabel-ohe\t{batch_ohe[1].shape}"
     )
-
     return None
 
+
+def create_wd(OPTIONS):
+    try:
+        os.makedirs(OPTIONS["working_dir"])
+    except FileExistsError:
+        pass
+
+    os.chdir(OPTIONS["working_dir"])
+    logging.info(f'change wd at: {OPTIONS["working_dir"]}')
+    return None
 
 def input_paramenters_checkpoint(OPTIONS):
     """
@@ -117,26 +118,7 @@ def input_paramenters_checkpoint(OPTIONS):
         logging.error(f'input file does not exit: {OPTIONS["input_file"]}')
         raise FileNotFoundError(OPTIONS["input_file"])
         raise SystemExit
-
-    # if OPTIONS["evaluate"]["model_dir"] and OPTIONS["evaluate"]["model"]:
-    #     model_path = os.path.join(
-    #         OPTIONS["evaluate"]["model_dir"], OPTIONS["evaluate"]["model"]
-    #     )
-    #     if not os.path.exists(OPTIONS["evaluate"]["model_dir"]):
-    #         logging.error(
-    #             f'model dir does not exit: {OPTIONS["evaluate"]["model_dir"]}'
-    #         )
-    #         raise FileNotFoundError(OPTIONS["evaluate"]["model_dir"])
-    #         raise SystemExit
-
-    #     if not os.path.exists(model_path) and not OPTIONS["flags"]["train"]:
-    #         logging.error(f"model file does not exit: {model_path}")
-    #         raise FileNotFoundError(model_path)
-    #         raise SystemExit
-    # if not os.path.exists(OPTIONS["working_dir"]):
-    #     os.makedirs(OPTIONS["working_dir"])
-    #     logging.info(f'create wd: {OPTIONS["working_dir"]}')
-    # return None
+    return None
 
 
 def print_history(

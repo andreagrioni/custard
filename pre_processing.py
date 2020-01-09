@@ -26,22 +26,24 @@ def watson_crick(x_nt, y_nt, alphabet=None):
     return alphabet.get(pair, 0)
 
 
-def one_hot_encoding(df, shape):
+def one_hot_encoding(df, tensor_dim):
     """
     fun transform input database to
     one hot encoding array.
 
     paramenters:
     df=input dataset
-    shape=tensors shapes
+    tensor_dim=tensors shapes
     """
 
-    dim_1, dim_2, _ = shape
+    dim_1, dim_2 = tensor_dim
 
     samples = df.shape[0]
+    # matrix of 4D with samples, nucleotide
+    # binding length, miRNA length,
+    # channels (dot matrix and conservation)
     shape_matrix_2d = (samples, dim_1, dim_2, 2)
-    #shape_1d_cons = (samples, dim_2, 1)  # 20nt
-
+    
     x_sequence = df.iloc[:, 0].values.tolist()
     y_sequence = df.iloc[:, 1].values.tolist()
     z_cons = df.iloc[:, 2].values.tolist()
@@ -54,15 +56,19 @@ def one_hot_encoding(df, shape):
             x_seq_nt = x_sequence[sample][x_seq_pos]
             for y_seq_pos in range(0, dim_2):
                 y_seq_nt = y_sequence[sample][y_seq_pos]
-                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
-                    x_seq_nt, y_seq_nt
-                )
-                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 1] = z_cons_list[x_seq_pos]
+                ohe_matrix_2d[
+                    sample, x_seq_pos, y_seq_pos, 0
+                    ] = watson_crick(
+                        x_seq_nt, y_seq_nt
+                    )
+                ohe_matrix_2d[
+                    sample, x_seq_pos, y_seq_pos, 1
+                    ] = z_cons_list[x_seq_pos]
 
     return ohe_matrix_2d
 
 
-def make_sets_ohe(dataset, shape):
+def make_sets_ohe(dataset, tensor_dim):
     """
     fun converts input batch into 
     one hot encoding of features
@@ -75,63 +81,45 @@ def make_sets_ohe(dataset, shape):
     df_features = dataset.drop(["label"], axis=1)
     df_labels = dataset["label"]
 
-    X_train = one_hot_encoding(df_features, shape)
+    X_train = one_hot_encoding(df_features, tensor_dim)
     y_train = pd.get_dummies(df_labels).to_numpy()
 
-    return X_train, y_train
+    return [X_train, y_train]
 
 
-def create_batches_points(samples, batches_size):
-    """
-    http://yaoyao.codes/pandas/2018/01/23/pandas-split-a-dataframe-into-chunks
-
-    fun splits input pandas df into 
-    batches. Returns a list of 
-    subarrays.
-
-    paramenters:
-    samples=array of samles
-    batches_size=chunk size
-    """
-    batches_points = list(
-        range(
-            1 * batches_size,
-            (samples // batches_size + 1) * batches_size,
-            batches_size,
-        )
-    )
-
-    logging.info(
-        f"split dataframe of shape {samples} into {len(batches_points)} +~ 1 mini-batches of size {batches_size}"
-    )
-
-    return batches_points
-
-
-def load_dataset(target_tsv, shape):
+def load_dataset(
+    train_tsv, validation_tsv, tensor_dim, scope='train'
+    ):
     """
     fun loads connection table as pandas df,
     and return a list containing minibatches
     of connections as ohe (features) and labels.
 
     parameters:
-    dataset=custard input tsv file
+    train_tsv=custard train samples
+    validation_tsv=custard validation samples
+    tensor_dim=tensor dimensions
+    scope=model stage (train, validation, pred)
     """
-    try:
-        df = (
-            pd.read_csv(target_tsv, sep="\t", names=["x", "y", "z", "label"])
-            .sample(frac=1)
-            .reset_index(drop=True)
-        )
-    except Exception as e:
-        logging.error("Exception occured", exc_info=True)
-        raise SystemExit("Failed to load dataset as pandas DataFrame")
-
-    df_ohe, df_labels = make_sets_ohe(df, shape)
     
-    return (df_ohe, df_labels)
+    target_files = [train_tsv, validation_tsv]
+    datasets = []
+
+    for target_tsv in target_files:
+        try:
+            df = (
+                pd.read_csv(target_tsv, sep="\t", names=["x", "y", "z", "label"])
+                .sample(frac=1)
+                .reset_index(drop=True)
+            )
+        except Exception as e:
+            logging.error("Exception occured", exc_info=True)
+            raise SystemExit("Failed to load dataset as pandas DataFrame")
+        data_ohe = make_sets_ohe(df, tensor_dim)
+        datasets += data_ohe
+
+    return datasets
 
 
 if __name__ == "__main__":
-    target_tsv = "pre_processing_test.tsv"
-    load_dataset(target_tsv)
+    pass

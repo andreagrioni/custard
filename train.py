@@ -7,7 +7,7 @@ import math
 import tempfile
 import misc
 
-
+# not able to install wandb
 # import wandb
 # from wandb.keras import WandbCallback
 
@@ -72,10 +72,38 @@ def train_network(
         batch_size=batch_size,
         epochs=10,
         callbacks=network_callbacks('test.log', tmpdirname),
+#        callbacks=[WandbCallback()],
         validation_data=val_dataset,
         use_multiprocessing=True,
         verbose=1,
     )
+    return model
+
+
+def do_training(OPTIONS, dataset, tensor_dim):
+    train_opt = OPTIONS["train"]
+    # train settings
+    batch_size = train_opt["batch_size"]
+    classes = train_opt["classes"]
+    
+    misc.create_wd(OPTIONS)
+
+    # generate network
+    model = network.build_network(
+        classes=classes, shape=tensor_dim
+        )
+    # train network
+    train_dataset = (dataset[0], dataset[1])
+    val_dataset = (dataset[2], dataset[3])
+    
+    model = train_network(
+        model,
+        train_dataset,
+        val_dataset,
+        batch_size=batch_size
+    )
+    # save model
+    network.save_model(model, os.getcwd())
     return model
 
 
