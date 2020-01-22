@@ -15,9 +15,12 @@ if __name__ == "__main__":
 
     if OPTIONS["flags"]["train"]:
         dataset = pre_processing.load_dataset(
-            dataset=OPTIONS["train"]["input_file"],
+            infiles=OPTIONS["train"]["input_file"],
             tensor_dim=OPTIONS["train"]["tensor_dim"],
+            read_file=OPTIONS["train"]["load_dataset"],
+            save_datasets=OPTIONS["train"]["save_ohe"],
         )
+
         model = train.do_training(
             OPTIONS, dataset, tensor_dim=OPTIONS["train"]["tensor_dim"]
         )

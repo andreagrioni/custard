@@ -18,8 +18,11 @@ def load_options():
                 "batch_size": 8,
                 "classes": 2,
                 "validation": True,
-                "input_file": ("toy/toy_train.tsv", "toy/toy_val.tsv"),
+                # "input_file": ("toy/toy_train.tsv", "toy/toy_val.tsv"),
+                "input_file": "input_files_to_ohe.npz",
                 "working_dir": "test/",
+                "load_dataset": True,
+                "save_ohe": False,
             },
             "evaluate": {
                 "input_file": ("toy/toy_test.tsv", None),

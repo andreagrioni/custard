@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import misc
 import logging
+import os
+
 
 """
 this module creates input dataset
@@ -36,31 +38,40 @@ def one_hot_encoding(df, tensor_dim):
     tensor_dim=tensors shapes
     """
 
-    dim_1, dim_2, channel = tensor_dim
-
     samples = df.shape[0]
     # matrix of 4D with samples, nucleotide
     # binding length, miRNA length,
     # channels (dot matrix and conservation)
-    shape_matrix_2d = (samples, dim_1, dim_2, channel)
-
-    x_sequence = df.iloc[:, 0].values.tolist()
-    y_sequence = df.iloc[:, 1].values.tolist()
-    z_cons = df.iloc[:, 2].values.tolist()
+    shape_matrix_2d = (samples, *tensor_dim)
 
     ohe_matrix_2d = np.zeros(shape_matrix_2d)
 
-    for sample in range(0, samples):
-        z_cons_list = z_cons[sample].split(",")
-        for x_seq_pos in range(0, dim_1):
-            x_seq_nt = x_sequence[sample][x_seq_pos]
-            for y_seq_pos in range(0, dim_2):
-                y_seq_nt = y_sequence[sample][y_seq_pos]
-                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 0] = watson_crick(
-                    x_seq_nt, y_seq_nt
-                )
-                ohe_matrix_2d[sample, x_seq_pos, y_seq_pos, 1] = z_cons_list[x_seq_pos]
+    for index, row in df.iterrows():
+        for bind_index, bind_nt in enumerate(row.binding_sequence):
+            sample_bind_score = list(map(float, row.binding_cons_score.split(",")))
+            sample_mirna_score = list(map(float, row.mirna_cons_score.split(",")))
 
+            for mirna_index, mirna_nt in enumerate(row.mirna_binding_sequence):
+
+                cons_score = (
+                    sample_bind_score[bind_index] * sample_mirna_score[mirna_index]
+                )
+                ohe_matrix_2d[index, bind_index, mirna_index, 0] = watson_crick(
+                    bind_nt, mirna_nt
+                )
+                ohe_matrix_2d[index, bind_index, mirna_index, 1] = cons_score
+            ## debug
+            # if index == 0:
+            #     nt_pair = watson_crick(bind_nt, mirna_nt)
+            #     print(row.binding_sequence)
+            #     print(row.mirna_binding_sequence)
+            #     print(bind_nt, mirna_nt, nt_pair)
+            #     print(
+            #         sample_bind_score[bind_index],
+            #         sample_mirna_score[mirna_index],
+            #         cons_score,
+            #     )
+            # break
     return ohe_matrix_2d
 
 
@@ -75,43 +86,66 @@ def make_sets_ohe(dataset, tensor_dim):
     batch=mini-batch as Pandas df
     """
     df_features = dataset.drop(["label"], axis=1)
-    df_labels = dataset["label"]
 
     X_train = one_hot_encoding(df_features, tensor_dim)
-    y_train = pd.get_dummies(df_labels).to_numpy()
+    y_train = pd.get_dummies(dataset.label).to_numpy()
 
     return [X_train, y_train]
 
 
-def load_dataset(dataset, tensor_dim, scope="train"):
+def load_dataset(
+    infiles, tensor_dim=None, scope="train", read_file=False, save_datasets=False
+):
     """
     fun loads connection table as pandas df,
     and return a list containing minibatches
     of connections as ohe (features) and labels.
 
     parameters:
-    dataset=tuple of train,validation or test set
+    infiles=tuple of train,validation or test set
     tensor_dim=tensor dimensions
     scope=model stage (train, validation, pred)
+    read_file=load datasets from file
     """
-
-    datasets = []
-
-    for target_tsv in dataset:
-        if target_tsv:
-            try:
-                df = (
-                    pd.read_csv(target_tsv, sep="\t", names=["x", "y", "z", "label"])
-                    .sample(frac=1)
-                    .reset_index(drop=True)
-                )
-            except Exception as e:
-                logging.error("Exception occured", exc_info=True)
-                raise SystemExit("Failed to load dataset as pandas DataFrame")
-            data_ohe = make_sets_ohe(df, tensor_dim)
-            datasets += data_ohe
+    if read_file:
+        print("load dataset from file:", infiles, sep="\t")
+        with np.load(infiles) as data:
+            datasets = [
+                data["X_train"],
+                data["y_train"],
+                data["X_val"],
+                data["y_val"],
+            ]
+    else:
+        print("converting files to ohe datasets:", infiles, sep="\t")
+        datasets = []
+        for target_tsv in infiles:
+            if target_tsv:
+                try:
+                    df = (
+                        pd.read_csv(
+                            target_tsv, sep="\t"
+                        )  # , names=["x", "y", "z", "label"])
+                        .sample(frac=1)
+                        .reset_index(drop=True)
+                    )
+                except Exception as e:
+                    logging.error("Exception occured", exc_info=True)
+                    raise SystemExit("Failed to load dataset as pandas DataFrame")
+                data_ohe = make_sets_ohe(df, tensor_dim)
+                datasets += data_ohe
+        if save_datasets:
+            print("saving ohe datasets at location:", os.getcwd(), sep="\t")
+            np.savez(
+                "custard_input_files_to_ohe.npz",
+                X_train=datasets[0],
+                X_val=datasets[2],
+                y_train=datasets[1],
+                y_val=datasets[3],
+            )
     return datasets
 
 
 if __name__ == "__main__":
+    load_dataset(["toy/toy_train.tsv", "toy/toy_val.tsv"], (200, 20, 2))
     pass
