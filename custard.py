@@ -24,18 +24,18 @@ if __name__ == "__main__":
         model = train.do_training(
             OPTIONS, dataset, tensor_dim=OPTIONS["train"]["tensor_dim"]
         )
-    if OPTIONS["flags"]["evaluate"]:
-        dataset, labels = pre_processing.load_dataset(
-            dataset=OPTIONS["evaluate"]["input_file"],
-            tensor_dim=OPTIONS["evaluate"]["tensor_dim"],
-        )
-        model = network.load_model_network(
-            OPTIONS["evaluate"]["model"], OPTIONS["evaluate"]["model_dir"]
-        )
-        predictions = network.model_predict(model, dataset)
-        evaluate.evaluate_model(
-            y_true=labels,
-            y_pred=predictions,
-            threshold=OPTIONS["evaluate"]["threshold"],
-            output_dir=OPTIONS["evaluate"]["model_dir"],
-        )
+    # if OPTIONS["flags"]["evaluate"]:
+    #     dataset, labels = pre_processing.load_dataset(
+    #         dataset=OPTIONS["evaluate"]["input_file"],
+    #         tensor_dim=OPTIONS["evaluate"]["tensor_dim"],
+    #     )
+    #     model = network.load_model_network(
+    #         OPTIONS["evaluate"]["model"], OPTIONS["evaluate"]["model_dir"]
+    #     )
+    #     predictions = network.model_predict(model, dataset)
+    #     evaluate.evaluate_model(
+    #         y_true=labels,
+    #         y_pred=predictions,
+    #         threshold=OPTIONS["evaluate"]["threshold"],
+    #         output_dir=OPTIONS["evaluate"]["model_dir"],
+    #     )

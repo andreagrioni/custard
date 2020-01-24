@@ -47,15 +47,15 @@ def one_hot_encoding(df, tensor_dim):
     ohe_matrix_2d = np.zeros(shape_matrix_2d)
 
     for index, row in df.iterrows():
+        sample_bind_score = list(map(float, row.binding_cons_score.split(",")))
+        sample_mirna_score = list(map(float, row.mirna_cons_score.split(",")))
+
         for bind_index, bind_nt in enumerate(row.binding_sequence):
-            sample_bind_score = list(map(float, row.binding_cons_score.split(",")))
-            sample_mirna_score = list(map(float, row.mirna_cons_score.split(",")))
+            nt_bind_cons_score = sample_bind_score[bind_index]
 
             for mirna_index, mirna_nt in enumerate(row.mirna_binding_sequence):
 
-                cons_score = (
-                    sample_bind_score[bind_index] * sample_mirna_score[mirna_index]
-                )
+                cons_score = nt_bind_cons_score * sample_mirna_score[mirna_index]
                 ohe_matrix_2d[index, bind_index, mirna_index, 0] = watson_crick(
                     bind_nt, mirna_nt
                 )
