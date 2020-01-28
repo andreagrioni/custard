@@ -12,7 +12,7 @@ X = df.iloc[:, :-1]
 y = df.iloc[:, -1]
 
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.8)
+X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.8, random_state=1989)
 
 train = pd.concat([X_train, y_train], axis=1)
 val = pd.concat([X_val, y_val], axis=1)

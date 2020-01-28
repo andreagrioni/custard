@@ -43,33 +43,43 @@ def one_hot_encoding(df, tensor_dim):
     # binding length, miRNA length,
     # channels (dot matrix and conservation)
     shape_matrix_2d = (samples, *tensor_dim)
+    ohe_matrix_2d = np.zeros(shape_matrix_2d, dtype="float32")
+    if tensor_dim[-1] == 1:
+        multichannel = False
+    elif tensor_dim[-1] == 2:
+        multichannel = 2
+    elif tensor_dim[-1] == 3:
+        multichannel = 3
     start = time.time()
 
-    ohe_matrix_2d = np.zeros(shape_matrix_2d, dtype="float32")
-    # print("start ohe function at:")
     for index, row in df.iterrows():
-        sample_bind_score = list(map(float, row.binding_cons_score.split(",")))
-        sample_mirna_score = list(map(float, row.mirna_cons_score.split(",")))
+        if multichannel:
+            sample_bind_score = list(map(float, row.binding_cons_score.split(",")))
+            sample_mirna_score = list(map(float, row.mirna_cons_score.split(",")))
 
         for bind_index, bind_nt in enumerate(row.binding_sequence):
-            nt_bind_cons_score = sample_bind_score[bind_index]
+            if multichannel:
+                nt_bind_cons_score = sample_bind_score[bind_index]
 
             for mirna_index, mirna_nt in enumerate(row.mirna_binding_sequence):
 
                 ohe_matrix_2d[index, bind_index, mirna_index, 0] = watson_crick(
                     bind_nt, mirna_nt
                 )
-
-                cons_score = nt_bind_cons_score * sample_mirna_score[mirna_index]
-                ohe_matrix_2d[index, bind_index, mirna_index, 1] = cons_score
+                if multichannel == 2:
+                    cons_score = nt_bind_cons_score * sample_mirna_score[mirna_index]
+                    ohe_matrix_2d[index, bind_index, mirna_index, 1] = cons_score
+                elif multichannel == 3:
+                    ohe_matrix_2d[index, bind_index, mirna_index, 1] = nt_bind_cons_score
+                    ohe_matrix_2d[index, bind_index, mirna_index, 2] = sample_mirna_score[mirna_index]
         if index % 1000 == 0:
             end = time.time()
             print(
-                index,
-                "rows done | elapsed  time since start",
-                (end - start),
-                "sec.",
-                sep="\t",
+
+                "rows:\t%s" %(index),
+                "elapsed (sec):\t%s" %(end - start),
+                "multichannel:\t%s" %(multichannel),
+                sep=" | ",
             )
             ## debug
             # if index == 0:
@@ -151,13 +161,15 @@ def load_dataset(
                 data_ohe = make_sets_ohe(df, tensor_dim)
                 datasets += data_ohe
         if save_datasets:
-            print("saving ohe datasets at location:", os.getcwd(), sep="\t")
+            
+            print("saving ohe datasets at location:", output_dataset_filename, sep="\t")
+            
             np.savez(
                 output_dataset_filename,
                 X_train=datasets[0],
                 X_val=datasets[2],
                 y_train=datasets[1],
-                y_val=datasets[3],
+                y_val=datasets[3],    
             )
     return datasets
 

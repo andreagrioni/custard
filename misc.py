@@ -10,23 +10,23 @@ def load_options():
             OPTIONS = json.load(fp)
     except:
         OPTIONS = {
-            "flags": {"train": True, "evaluate": True, "predict": False},
+            "flags": {"train": True, "evaluate": False, "predict": False},
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
-                "tensor_dim": (200, 20, 2),
+                "tensor_dim": (50, 20, 1),
                 "epochs": 15,
                 "batch_size": 32,
                 "classes": 2,
                 "validation": True,
                 # "input_file": (
-                #     "/home/grioni_andrea/custard_data_bucket/data/custard_00_train_train.tsv",
-                #     "/home/grioni_andrea/custard_data_bucket/data/custard_00_train_val.tsv",
+                #     "/home/grioni_andrea/custard_data_bucket/data/custard_00/custard_00_train_train.tsv",
+                #     "/home/grioni_andrea/custard_data_bucket/data/custard_00/custard_00_train_val.tsv",
                 # ),
-                "input_file": "/home/grioni_andrea/custard_data_bucket/data/custard_00.ohe.npz",
+                "input_file": "/home/grioni_andrea/custard_data_bucket/data/custard_04/custard_04.ohe.npz",
                 "working_dir": "test/",
                 "load_dataset": True,
                 "save_ohe": False,
-                "output_dataset_filename": "/home/grioni_andrea/custard_data_bucket/data/custard_00.ohe.npz",
+                "output_dataset_filename": "/home/grioni_andrea/custard_data_bucket/data/custard_04/custard_04.ohe.npz",
             },
             "evaluate": {
                 "input_file": ("toy/toy_test.tsv", None),
