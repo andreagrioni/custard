@@ -18,8 +18,10 @@ train = pd.concat([X_train, y_train], axis=1)
 val = pd.concat([X_val, y_val], axis=1)
 
 
-train_filename_path = os.path.join(outfolder, "toy_train.tsv")
-val_filename_path = os.path.join(outfolder, "toy_val.tsv")
+file_name = os.path.basename(table).replace(".tsv", "")
+
+train_filename_path = os.path.join(outfolder, "%s_train.tsv" % (file_name))
+val_filename_path = os.path.join(outfolder, "%s_val.tsv" % (file_name))
 train.to_csv(train_filename_path, sep="\t", index=False)
 val.to_csv(val_filename_path, sep="\t", index=False)
 

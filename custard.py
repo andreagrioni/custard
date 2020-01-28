@@ -12,18 +12,19 @@ import network
 if __name__ == "__main__":
 
     OPTIONS = misc.load_options()
+    dataset = pre_processing.load_dataset(
+        infiles=OPTIONS["train"]["input_file"],
+        tensor_dim=OPTIONS["train"]["tensor_dim"],
+        read_file=OPTIONS["train"]["load_dataset"],
+        save_datasets=OPTIONS["train"]["save_ohe"],
+        output_dataset_filename=OPTIONS["train"]["output_dataset_filename"],
+    )
 
     if OPTIONS["flags"]["train"]:
-        dataset = pre_processing.load_dataset(
-            infiles=OPTIONS["train"]["input_file"],
-            tensor_dim=OPTIONS["train"]["tensor_dim"],
-            read_file=OPTIONS["train"]["load_dataset"],
-            save_datasets=OPTIONS["train"]["save_ohe"],
-        )
-
         model = train.do_training(
             OPTIONS, dataset, tensor_dim=OPTIONS["train"]["tensor_dim"]
         )
+
     # if OPTIONS["flags"]["evaluate"]:
     #     dataset, labels = pre_processing.load_dataset(
     #         dataset=OPTIONS["evaluate"]["input_file"],

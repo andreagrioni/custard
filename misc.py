@@ -10,19 +10,23 @@ def load_options():
             OPTIONS = json.load(fp)
     except:
         OPTIONS = {
-            "flags": {"train": True, "evaluate": True, "predict": False},
+            "flags": {"train": False, "evaluate": False, "predict": False},
             "log": {"level": "debug", "name": "test_logging.txt"},
             "train": {
                 "tensor_dim": (200, 20, 2),
                 "epochs": 15,
-                "batch_size": 8,
+                "batch_size": 32,
                 "classes": 2,
                 "validation": True,
-                "input_file": ("toy/toy_train.tsv", "toy/toy_val.tsv"),
+                "input_file": (
+                    "/home/angri/Desktop/project/custard_datasets/custard_00_train_train.tsv",
+                    "/home/angri/Desktop/project/custard_datasets/custard_00_train_val.tsv",
+                ),
                 # "input_file": "custard_input_files_to_ohe.npz",
                 "working_dir": "test/",
                 "load_dataset": False,
                 "save_ohe": True,
+                "output_dataset_filename": "custard_00.ohe.npz",
             },
             "evaluate": {
                 "input_file": ("toy/toy_test.tsv", None),

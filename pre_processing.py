@@ -4,7 +4,7 @@ import numpy as np
 import misc
 import logging
 import os
-
+import time
 
 """
 this module creates input dataset
@@ -43,9 +43,10 @@ def one_hot_encoding(df, tensor_dim):
     # binding length, miRNA length,
     # channels (dot matrix and conservation)
     shape_matrix_2d = (samples, *tensor_dim)
+    start = time.time()
 
-    ohe_matrix_2d = np.zeros(shape_matrix_2d)
-
+    ohe_matrix_2d = np.zeros(shape_matrix_2d, dtype="float32")
+    # print("start ohe function at:")
     for index, row in df.iterrows():
         sample_bind_score = list(map(float, row.binding_cons_score.split(",")))
         sample_mirna_score = list(map(float, row.mirna_cons_score.split(",")))
@@ -55,11 +56,21 @@ def one_hot_encoding(df, tensor_dim):
 
             for mirna_index, mirna_nt in enumerate(row.mirna_binding_sequence):
 
-                cons_score = nt_bind_cons_score * sample_mirna_score[mirna_index]
                 ohe_matrix_2d[index, bind_index, mirna_index, 0] = watson_crick(
                     bind_nt, mirna_nt
                 )
+
+                cons_score = nt_bind_cons_score * sample_mirna_score[mirna_index]
                 ohe_matrix_2d[index, bind_index, mirna_index, 1] = cons_score
+        if index % 1000 == 0:
+            end = time.time()
+            print(
+                index,
+                "rows done | elapsed  time since start",
+                (end - start),
+                "sec.",
+                sep="\t",
+            )
             ## debug
             # if index == 0:
             #     nt_pair = watson_crick(bind_nt, mirna_nt)
@@ -94,7 +105,12 @@ def make_sets_ohe(dataset, tensor_dim):
 
 
 def load_dataset(
-    infiles, tensor_dim=None, scope="train", read_file=False, save_datasets=False
+    infiles,
+    tensor_dim=None,
+    scope="train",
+    read_file=False,
+    save_datasets=False,
+    output_dataset_filename="custard.ohe.npz",
 ):
     """
     fun loads connection table as pandas df,
@@ -137,7 +153,7 @@ def load_dataset(
         if save_datasets:
             print("saving ohe datasets at location:", os.getcwd(), sep="\t")
             np.savez(
-                "custard_input_files_to_ohe.npz",
+                output_dataset_filename,
                 X_train=datasets[0],
                 X_val=datasets[2],
                 y_train=datasets[1],
