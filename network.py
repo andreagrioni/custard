@@ -43,12 +43,28 @@ def build_2D_branch(sequence_input):
     """
 
     branch = keras.layers.Conv2D(
-        filters=12, kernel_size=(6, 6), padding="same", data_format="channels_last"
+        filters=64, kernel_size=(6, 6), padding="same", data_format="channels_last"
     )(sequence_input)
     branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(
         branch
     )
     branch = keras.layers.MaxPooling2D(pool_size=(2, 2))(branch)
+    branch = keras.layers.Dropout(0.25)(branch)
+    # branch = keras.layers.Conv2D(
+    #     filters=256, kernel_size=(6, 6), padding="same", data_format="channels_last"
+    # )(sequence_input)
+    # branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(
+    #     branch
+    # )
+    # branch = keras.layers.MaxPooling2D(pool_size=(2, 2))(branch)
+    # branch = keras.layers.Conv2D(
+    #     filters=512, kernel_size=(6, 6), padding="same", data_format="channels_last"
+    # )(sequence_input)
+    # branch = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(
+    #     branch
+    # )
+    # branch = keras.layers.MaxPooling2D(pool_size=(2, 2))(branch)
+    
     branch = keras.layers.Flatten()(branch)
 
     return branch
@@ -83,6 +99,11 @@ def add_ann(concatenated, classes):
     classes=number of predicted classes
     """
     # build ANN model layers
+    model = keras.layers.Dense(256)(concatenated)
+    model = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(model)
+    model = keras.layers.BatchNormalization()(model)
+    model = keras.layers.Dropout(0.5)(model)
+
     model = keras.layers.Dense(128)(concatenated)
     model = keras.layers.ReLU(max_value=None, negative_slope=0.0, threshold=0.0)(model)
     model = keras.layers.BatchNormalization()(model)

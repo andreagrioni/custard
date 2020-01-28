@@ -6,6 +6,7 @@ import network
 import math
 import tempfile
 import misc
+import datetime
 
 # not able to install wandb
 # import wandb
@@ -45,7 +46,7 @@ def network_callbacks(log_name, dest_path):
 
 
 def train_network(
-    model, train_set, val_dataset, batch_size,
+    model, train_set, val_dataset, batch_size, epochs
 ):
     """
     fun train network on user 
@@ -57,6 +58,10 @@ def train_network(
     batch_size=batch size
     """
 
+    log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0)
+
+
     tmpdirname = "train_tmp"
     os.makedirs(tmpdirname, exist_ok=True)
 
@@ -67,8 +72,8 @@ def train_network(
         X_train,
         y_train,
         batch_size=batch_size,
-        epochs=10,
-        callbacks=network_callbacks("test.log", tmpdirname),
+        epochs=epochs,
+        callbacks=[tensorboard_callback],
         #        callbacks=[WandbCallback()],
         validation_data=val_dataset,
         use_multiprocessing=True,
@@ -84,7 +89,7 @@ def create_wd(OPTIONS):
         pass
 
 
-def do_training(OPTIONS, dataset, tensor_dim):
+def do_training(OPTIONS, dataset):
     # creates wd
     create_wd(OPTIONS)
 
@@ -92,13 +97,15 @@ def do_training(OPTIONS, dataset, tensor_dim):
     # train settings
     batch_size = train_opt["batch_size"]
     classes = train_opt["classes"]
+    tensor_dim=train_opt["tensor_dim"]
+    epochs=train_opt["epochs"]
     # generate network
     model = network.build_network(classes=classes, shape=tensor_dim)
     # train network
     train_dataset = (dataset[0], dataset[1])
     val_dataset = (dataset[2], dataset[3])
 
-    model = train_network(model, train_dataset, val_dataset, batch_size=batch_size)
+    model = train_network(model, train_dataset, val_dataset, batch_size=batch_size, epochs=epochs)
     # save model
     network.save_model(model, OPTIONS["train"]["working_dir"])
     return model

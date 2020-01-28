@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     if OPTIONS["flags"]["train"]:
         model = train.do_training(
-            OPTIONS, dataset, tensor_dim=OPTIONS["train"]["tensor_dim"]
+            OPTIONS, dataset
         )
 
     # if OPTIONS["flags"]["evaluate"]:
