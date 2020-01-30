@@ -2,49 +2,16 @@ import logging
 import pprint
 import os
 import json
-
+import sys
 
 def load_options():
+
     try:
         with open(sys.argv[1], "r") as fp:
             OPTIONS = json.load(fp)
-    except:
-        OPTIONS = {
-            "flags": {"train": False, "evaluate": True, "predict": False},
-            "log": {"level": "debug", "name": "test_logging.txt"},
-            "train": {
-                "tensor_dim": (50, 20, 2),
-                "epochs": 15,
-                "batch_size": 64,
-                "classes": 2,
-                "validation": True,
-
-                "input_file" : "/home/grioni_andrea/custard_data_bucket/data/custard_01/custard_01.ohe.npz",
-
-                # "input_file": (
-                #     "/home/grioni_andrea/custard_data_bucket/data/custard_01/custard_01_train_train.tsv",
-                #     "/home/grioni_andrea/custard_data_bucket/data/custard_01/custard_01_train_val.tsv",
-                # ),
-
-#                "input_file": "/home/grioni_andrea/custard_data_bucket/data/custard_04/custard_04.ohe.npz",
-
-                "load_dataset": True,
-                "save_ohe": False,
-                "output_dataset_filename": "/home/grioni_andrea/custard_data_bucket/data/custard_01/custard_01.ohe.npz",
-                "model_output_dir": "/home/grioni_andrea/custard_data_bucket/train/model_01/",
-                "model_name" : "model_01.h5"
-            },
-
-            "evaluate": {
-            #    "input_file": ("toy/toy_test.tsv", None),
-                "batch_size": 8,
-                "tensor_dim": (200, 20, 2),
-                "metrics_filename": "eval_metrics",
-                "threshold": 0.5,
-                #"model_output_dir": "/home/grioni_andrea/custard_data_bucket/train/model_01/",
-                #"model_name" : "model_01.h5"
-            },
-        }
+    except IndexError:
+        print("please provide input confing json file, exit...")
+        sys.exit()
 
     create_log(OPTIONS)
     print_options_log(OPTIONS)

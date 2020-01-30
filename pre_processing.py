@@ -114,29 +114,26 @@ def make_sets_ohe(dataset, tensor_dim):
     return [X_train, y_train]
 
 
-def load_dataset(
-    infiles,
-    tensor_dim=None,
-    read_file=False,
-    save_datasets=False,
-    output_dataset_filename="custard.ohe.npz",
-    train=False,
-    eval=False
-
-):
+def load_dataset(OPTIONS):
     """
-    fun loads connection table as pandas df,
-    and return a list containing minibatches
-    of connections as ohe (features) and labels.
+    fun loads connection table as pandas df to
+    one hot encoding array.
 
     parameters:
-    infiles=tuple of train,validation or test set
-    tensor_dim=tensor dimensions
-    scope=model stage (train, validation, pred)
-    read_file=load datasets from file
+    OPTIONS=input custard options (dict)
     """
 
-    if read_file:
+    infiles = OPTIONS["input_file"],
+    tensor_dim = OPTIONS["tensor_dim"],
+    load_dataset = OPTIONS["load_dataset"],
+    save_datasets = OPTIONS["save_ohe"],
+    output_dataset_filename = opt["output_ohe_datasets_name"],
+    train = OPTIONS["flags"]["train"],
+    eval = OPTIONS["flags"]["evaluate"]
+
+
+
+    if load_dataset:
         print("load dataset from file:", infiles, sep="\t")
         if train:
             with np.load(infiles) as data:
@@ -158,9 +155,7 @@ def load_dataset(
                     df = (
                         pd.read_csv(
                             target_tsv, sep="\t"
-                        )  # , names=["x", "y", "z", "label"])
-                        .sample(frac=1)
-                        .reset_index(drop=True)
+                        ).sample(frac=1).reset_index(drop=True)
                     )
                 except Exception as e:
                     logging.error("Exception occured", exc_info=True)
@@ -168,7 +163,6 @@ def load_dataset(
                 data_ohe = make_sets_ohe(df, tensor_dim)
                 datasets += data_ohe
         if save_datasets:
-            
             print("saving ohe datasets at location:", output_dataset_filename, sep="\t")
             if len(datasets) == 4:
                 np.savez(
@@ -182,9 +176,7 @@ def load_dataset(
                 np.savez(
                     output_dataset_filename,
                     X_test=datasets[0],
-                    y_test=datasets[1],
-                #    y_train=datasets[1],
-                #    y_val=datasets[3],    
+                    y_test=datasets[1],   
                 )
     return datasets
 
