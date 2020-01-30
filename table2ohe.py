@@ -1,14 +1,13 @@
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
-import misc
-import logging
 import os
 import time
+import sys
+import json
 
 """
-this module creates input dataset
-for custard
+convert table to one hot encoding, save as numpy array.
 """
 
 
@@ -44,21 +43,17 @@ def one_hot_encoding(df, tensor_dim):
     # channels (dot matrix and conservation)
     shape_matrix_2d = (samples, *tensor_dim)
     ohe_matrix_2d = np.zeros(shape_matrix_2d, dtype="float32")
-    if tensor_dim[-1] == 1:
-        multichannel = False
-    elif tensor_dim[-1] == 2:
-        multichannel = 2
-    elif tensor_dim[-1] == 3:
-        multichannel = 3
+    multichannel = tensor_dim[-1]
+
     start = time.time()
 
     for index, row in df.iterrows():
-        if multichannel:
+        if multichannel > 1:
             sample_bind_score = list(map(float, row.binding_cons_score.split(",")))
             sample_mirna_score = list(map(float, row.mirna_cons_score.split(",")))
 
         for bind_index, bind_nt in enumerate(row.binding_sequence):
-            if multichannel:
+            if multichannel > 1:
                 nt_bind_cons_score = sample_bind_score[bind_index]
 
             for mirna_index, mirna_nt in enumerate(row.mirna_binding_sequence):
@@ -70,33 +65,24 @@ def one_hot_encoding(df, tensor_dim):
                     cons_score = nt_bind_cons_score * sample_mirna_score[mirna_index]
                     ohe_matrix_2d[index, bind_index, mirna_index, 1] = cons_score
                 elif multichannel == 3:
-                    ohe_matrix_2d[index, bind_index, mirna_index, 1] = nt_bind_cons_score
-                    ohe_matrix_2d[index, bind_index, mirna_index, 2] = sample_mirna_score[mirna_index]
+                    ohe_matrix_2d[
+                        index, bind_index, mirna_index, 1
+                    ] = nt_bind_cons_score
+                    ohe_matrix_2d[
+                        index, bind_index, mirna_index, 2
+                    ] = sample_mirna_score[mirna_index]
         if index % 1000 == 0:
             end = time.time()
             print(
-
-                "rows:\t%s" %(index),
-                "elapsed (sec):\t%s" %(end - start),
-                "multichannel:\t%s" %(multichannel),
+                "rows:\t%s" % (index),
+                "elapsed (sec):\t%s" % (end - start),
+                "multichannel:\t%s" % (multichannel),
                 sep=" | ",
             )
-            ## debug
-            # if index == 0:
-            #     nt_pair = watson_crick(bind_nt, mirna_nt)
-            #     print(row.binding_sequence)
-            #     print(row.mirna_binding_sequence)
-            #     print(bind_nt, mirna_nt, nt_pair)
-            #     print(
-            #         sample_bind_score[bind_index],
-            #         sample_mirna_score[mirna_index],
-            #         cons_score,
-            #     )
-            # break
     return ohe_matrix_2d
 
 
-def make_sets_ohe(dataset, tensor_dim):
+def make_sets_ohe(samples, labels, tensor_dim):
     """
     fun converts input batch into 
     one hot encoding of features
@@ -106,15 +92,16 @@ def make_sets_ohe(dataset, tensor_dim):
     paramenters:
     batch=mini-batch as Pandas df
     """
-    df_features = dataset.drop(["label"], axis=1)
+    X = samples.reset_index(drop=True).copy()
+    y = labels.reset_index(drop=True).copy()
 
-    X_train = one_hot_encoding(df_features, tensor_dim)
-    y_train = pd.get_dummies(dataset.label).to_numpy()
+    X_ohe = one_hot_encoding(X, tensor_dim)
+    y_ohe = pd.get_dummies(y).to_numpy()
 
-    return [X_train, y_train]
+    return X_ohe, y_ohe
 
 
-def load_dataset(OPTIONS):
+def load_dataset(OPTIONS, main=False):
     """
     fun loads connection table as pandas df to
     one hot encoding array.
@@ -123,17 +110,27 @@ def load_dataset(OPTIONS):
     OPTIONS=input custard options (dict)
     """
 
-    infiles = OPTIONS["input_file"],
-    tensor_dim = OPTIONS["tensor_dim"],
-    load_dataset = OPTIONS["load_dataset"],
-    save_datasets = OPTIONS["save_ohe"],
-    output_dataset_filename = opt["output_ohe_datasets_name"],
-    train = OPTIONS["flags"]["train"],
+    infiles = OPTIONS["input_file"]
+    tensor_dim = OPTIONS["tensor_dim"]
+    restore_dataset = OPTIONS["load_dataset"]
+    save_datasets = OPTIONS["save_ohe"]
+    output_dataset_filename = OPTIONS["output_ohe_datasets_name"]
+    make_validation = OPTIONS["validation"]
+    train = OPTIONS["flags"]["train"]
     eval = OPTIONS["flags"]["evaluate"]
 
+    if eval:
+        datasets = [0, 0]
+    elif train:
+        datasets = [0, 0, 0, 0]
+    elif main:
+        datasets = [0, 0, 0, 0]
+        print("running as stand-alone script")
+    else:
+        print("nothing to do, exit...")
+        sys.exit()
 
-
-    if load_dataset:
+    if restore_dataset:
         print("load dataset from file:", infiles, sep="\t")
         if train:
             with np.load(infiles) as data:
@@ -145,23 +142,30 @@ def load_dataset(OPTIONS):
                 ]
         elif eval:
             with np.load(infiles) as data:
-                datasets = [ data["X_test"], data["y_test"] ]
+                datasets = [data["X_test"], data["y_test"]]
     else:
         print("converting files to ohe datasets:", infiles, sep="\t")
-        datasets = []
-        for target_tsv in infiles:
-            if target_tsv:
-                try:
-                    df = (
-                        pd.read_csv(
-                            target_tsv, sep="\t"
-                        ).sample(frac=1).reset_index(drop=True)
-                    )
-                except Exception as e:
-                    logging.error("Exception occured", exc_info=True)
-                    raise SystemExit("Failed to load dataset as pandas DataFrame")
-                data_ohe = make_sets_ohe(df, tensor_dim)
-                datasets += data_ohe
+
+        try:
+            df = pd.read_csv(infiles, sep="\t")
+        except Exception as e:
+            if not main:
+                logging.error("Exception occured", exc_info=True)
+            raise SystemExit("Failed to load dataset as pandas DataFrame")
+
+        if make_validation:
+            y_samples = df.label
+            X_samples = df.drop(["label"], axis=1)
+            X_train, X_val, y_train, y_val = train_test_split(
+                X_samples, y_samples, test_size=0.2, random_state=1989
+            )
+        else:
+            print("training with no validation is not implemented yet, exit...")
+            sys.exit()
+
+        datasets[0], datasets[1] = make_sets_ohe(X_train, y_train, tensor_dim)
+        datasets[2], datasets[3] = make_sets_ohe(X_val, y_val, tensor_dim)
+
         if save_datasets:
             print("saving ohe datasets at location:", output_dataset_filename, sep="\t")
             if len(datasets) == 4:
@@ -170,17 +174,23 @@ def load_dataset(OPTIONS):
                     X_train=datasets[0],
                     X_val=datasets[2],
                     y_train=datasets[1],
-                    y_val=datasets[3],    
+                    y_val=datasets[3],
                 )
             elif len(datasets) == 2:
                 np.savez(
-                    output_dataset_filename,
-                    X_test=datasets[0],
-                    y_test=datasets[1],   
+                    output_dataset_filename, X_test=datasets[0], y_test=datasets[1],
                 )
     return datasets
 
 
 if __name__ == "__main__":
-    load_dataset(["toy/toy_train.tsv", "toy/toy_val.tsv"], (200, 20, 2))
-    pass
+    try:
+        with open(sys.argv[1], "r") as fp:
+            OPTIONS = json.load(fp)
+    except:
+        with open(
+            "/home/grioni_andrea/loft/custard/AG_table2ohe_confing.json", "r"
+        ) as fp:
+            OPTIONS = json.load(fp)
+
+    load_dataset(OPTIONS, main=True)

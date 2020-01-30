@@ -4,14 +4,18 @@ import os
 import json
 import sys
 
+
 def load_options():
 
-    try:
-        with open(sys.argv[1], "r") as fp:
-            OPTIONS = json.load(fp)
-    except IndexError:
-        print("please provide input confing json file, exit...")
-        sys.exit()
+    with open("/home/grioni_andrea/loft/custard/AG_custard_opt.json", "r") as fp:
+        OPTIONS = json.load(fp)
+    # try:
+    #     with open(sys.argv[1], "r") as fp:
+    #         OPTIONS = json.load(fp)
+    # except IndexError:
+    #     OPTIONS = json.load)
+    #     # print("please provide input confing json file, exit...")
+    #     # sys.exit()
 
     create_log(OPTIONS)
     print_options_log(OPTIONS)
@@ -136,3 +140,11 @@ def update_history(history, log_history, iteration=None):
 
 if __name__ == "__main__":
     pass
+
+
+def write_table(evaluate, OPTIONS):
+    loss, val = evaluate[0], evaluate[1]
+    string_out = "loss\tacc\n%s\t%s\n" % (loss, val)
+    with open(OPTIONS["evaluate"]["eval_file_output"], "w") as fo:
+        fo.write(string_out)
+    return OPTIONS["evaluate"]["eval_file_output"]

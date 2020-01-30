@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 import os
+import pandas as pd
 
 # import wandb
 # from wandb.keras import WandbCallback
@@ -66,7 +67,7 @@ def build_2D_branch(sequence_input):
     #     branch
     # )
     # branch = keras.layers.MaxPooling2D(pool_size=(2, 2))(branch)
-    
+
     branch = keras.layers.Flatten()(branch)
 
     return branch
@@ -162,7 +163,7 @@ def build_network(classes, shape):
     return model
 
 
-def load_model_network( model_dir, model_name ):
+def load_model_network(model_dir, model_name):
     """
     load h5 model.
     
@@ -176,6 +177,15 @@ def load_model_network( model_dir, model_name ):
 
 
 def save_model(model, path, name="my_model.h5"):
+    """
+    funct save the input model to target file name
+    and delete the model.
+
+    paramenters:
+    model=keras model
+    path=target directory
+    name=model name
+    """
     model_file_path = os.path.join(path, name)
     model.save(model_file_path)
     del model
@@ -183,9 +193,34 @@ def save_model(model, path, name="my_model.h5"):
 
 
 def model_evaluate(model, datasets, batch_size):
+    """
+    funct evaluate the model on the input
+    datasets of samples and labels.
+    it returns the metrics (loss, accuracy)
+
+    paramenters:
+    model=keras model
+    datasets=list of samples and labels
+    batch_size=size of each batch
+    """
     X_test, y_test = datasets
     output = model.evaluate(X_test, y_test, batch_size=batch_size)
     return output
+
+
+def model_predict(model, datasets, batch_size):
+    """
+    funct predict samples in the datasets input
+    and returns a vector of probabilitis for each
+    class.
+
+    paramenters:
+    model=keras model
+    datasets=array of samples
+    batch_size=size of each batch
+    """
+    return model.predict(datasets, batch_size=batch_size)
+
 
 def model_predict(model, dataset):
     """
