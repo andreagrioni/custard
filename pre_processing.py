@@ -117,10 +117,12 @@ def make_sets_ohe(dataset, tensor_dim):
 def load_dataset(
     infiles,
     tensor_dim=None,
-    scope="train",
     read_file=False,
     save_datasets=False,
     output_dataset_filename="custard.ohe.npz",
+    train=False,
+    eval=False
+
 ):
     """
     fun loads connection table as pandas df,
@@ -133,15 +135,20 @@ def load_dataset(
     scope=model stage (train, validation, pred)
     read_file=load datasets from file
     """
+
     if read_file:
         print("load dataset from file:", infiles, sep="\t")
-        with np.load(infiles) as data:
-            datasets = [
-                data["X_train"],
-                data["y_train"],
-                data["X_val"],
-                data["y_val"],
-            ]
+        if train:
+            with np.load(infiles) as data:
+                datasets = [
+                    data["X_train"],
+                    data["y_train"],
+                    data["X_val"],
+                    data["y_val"],
+                ]
+        elif eval:
+            with np.load(infiles) as data:
+                datasets = [ data["X_test"], data["y_test"] ]
     else:
         print("converting files to ohe datasets:", infiles, sep="\t")
         datasets = []
@@ -163,14 +170,22 @@ def load_dataset(
         if save_datasets:
             
             print("saving ohe datasets at location:", output_dataset_filename, sep="\t")
-            
-            np.savez(
-                output_dataset_filename,
-                X_train=datasets[0],
-                X_val=datasets[2],
-                y_train=datasets[1],
-                y_val=datasets[3],    
-            )
+            if len(datasets) == 4:
+                np.savez(
+                    output_dataset_filename,
+                    X_train=datasets[0],
+                    X_val=datasets[2],
+                    y_train=datasets[1],
+                    y_val=datasets[3],    
+                )
+            elif len(datasets) == 2:
+                np.savez(
+                    output_dataset_filename,
+                    X_test=datasets[0],
+                    y_test=datasets[1],
+                #    y_train=datasets[1],
+                #    y_val=datasets[3],    
+                )
     return datasets
 
 

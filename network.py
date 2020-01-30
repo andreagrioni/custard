@@ -162,7 +162,7 @@ def build_network(classes, shape):
     return model
 
 
-def load_model_network(model_name, model_dir):
+def load_model_network( model_dir, model_name ):
     """
     load h5 model.
     
@@ -181,6 +181,11 @@ def save_model(model, path, name="my_model.h5"):
     del model
     return model_file_path
 
+
+def model_evaluate(model, datasets, batch_size):
+    X_test, y_test = datasets
+    output = model.evaluate(X_test, y_test, batch_size=batch_size)
+    return output
 
 def model_predict(model, dataset):
     """

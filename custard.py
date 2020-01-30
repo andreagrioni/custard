@@ -12,27 +12,31 @@ import network
 if __name__ == "__main__":
 
     OPTIONS = misc.load_options()
+
+    opt = OPTIONS["train"]
+
     dataset = pre_processing.load_dataset(
-        infiles=OPTIONS["train"]["input_file"],
-        tensor_dim=OPTIONS["train"]["tensor_dim"],
-        read_file=OPTIONS["train"]["load_dataset"],
-        save_datasets=OPTIONS["train"]["save_ohe"],
-        output_dataset_filename=OPTIONS["train"]["output_dataset_filename"],
+        infiles=opt["input_file"],
+        tensor_dim=opt["tensor_dim"],
+        read_file=opt["load_dataset"],
+        save_datasets=opt["save_ohe"],
+        output_dataset_filename=opt["output_dataset_filename"],
+        train=OPTIONS["flags"]["train"],
+        eval=OPTIONS["flags"]["evaluate"]
     )
 
     if OPTIONS["flags"]["train"]:
         model = train.do_training(
-            OPTIONS, dataset
+            opt, dataset
         )
 
-    # if OPTIONS["flags"]["evaluate"]:
-    #     dataset, labels = pre_processing.load_dataset(
-    #         dataset=OPTIONS["evaluate"]["input_file"],
-    #         tensor_dim=OPTIONS["evaluate"]["tensor_dim"],
-    #     )
-    #     model = network.load_model_network(
-    #         OPTIONS["evaluate"]["model"], OPTIONS["evaluate"]["model_dir"]
-    #     )
+    if OPTIONS["flags"]["evaluate"]:
+
+        model = network.load_model_network(
+            opt["model_output_dir"], opt["model_name"]
+        )
+        evaluate = network.model_evaluate(model, datasets, OPTIONS["evaluate"]["batch_size"])
+
     #     predictions = network.model_predict(model, dataset)
     #     evaluate.evaluate_model(
     #         y_true=labels,

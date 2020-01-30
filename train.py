@@ -46,7 +46,7 @@ def network_callbacks(log_name, dest_path):
 
 
 def train_network(
-    model, train_set, val_dataset, batch_size, epochs
+    model, train_set, val_dataset, batch_size, epochs, model_name
 ):
     """
     fun train network on user 
@@ -58,8 +58,18 @@ def train_network(
     batch_size=batch size
     """
 
-    log_dir="logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # callbacks
+    log_dir="logs/fit/" + model_name + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=0)
+
+    early_stop = keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        min_delta=0.05,
+        patience=0,
+        verbose=0,
+        mode='auto',
+        baseline=None,
+        restore_best_weights=False)
 
 
     tmpdirname = "train_tmp"
@@ -73,7 +83,7 @@ def train_network(
         y_train,
         batch_size=batch_size,
         epochs=epochs,
-        callbacks=[tensorboard_callback],
+        callbacks=[tensorboard_callback, early_stop],
         #        callbacks=[WandbCallback()],
         validation_data=val_dataset,
         use_multiprocessing=True,
@@ -82,33 +92,31 @@ def train_network(
     return model
 
 
-def create_wd(OPTIONS):
-    try:
-        os.makedirs(OPTIONS["train"]["working_dir"])
-    except FileExistsError:
-        pass
+def create_wd(dir_path):
+    os.makedirs(dir_path, exist_ok=True)
+    return None
 
+def do_training(train_opt, dataset):
 
-def do_training(OPTIONS, dataset):
-    # creates wd
-    create_wd(OPTIONS)
-
-    train_opt = OPTIONS["train"]
     # train settings
     batch_size = train_opt["batch_size"]
     classes = train_opt["classes"]
-    tensor_dim=train_opt["tensor_dim"]
-    epochs=train_opt["epochs"]
+    tensor_dim = train_opt["tensor_dim"]
+    epochs = train_opt["epochs"]
+    model_output_dir = train_opt["model_output_dir"]
+    model_name = train_opt["model_name"]
+    # creates wd
+    create_wd(model_output_dir)
+
     # generate network
     model = network.build_network(classes=classes, shape=tensor_dim)
     # train network
     train_dataset = (dataset[0], dataset[1])
     val_dataset = (dataset[2], dataset[3])
 
-    model = train_network(model, train_dataset, val_dataset, batch_size=batch_size, epochs=epochs)
+    model = train_network(model, train_dataset, val_dataset, batch_size=batch_size, epochs=epochs, model_name=model_name)
     # save model
-    network.save_model(model, OPTIONS["train"]["working_dir"])
-    return model
+    return network.save_model(model, model_output_dir, name=model_name)
 
 
 if __name__ == "__main__":
